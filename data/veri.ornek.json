@@ -1,0 +1,17 @@
+{
+  "oturumlar": [
+    {"tarih": "2026-08-20", "kategori": "Python", "baslangic": "19:00:00", "bitis": "21:00:00", "sure_dakika": 120},
+    {"tarih": "2026-08-21", "kategori": "GitHub çalışması", "baslangic": "18:30:00", "bitis": "19:15:00", "sure_dakika": 45}
+  ],
+  "aktif_oturum": null,
+  "hedefler": {
+    "haftalik_saat": 15,
+    "toplam_hedef_saat": 135,
+    "son_bildirim_tarihi": null
+  },
+  "github": {
+    "kullanici": "Yoursel71",
+    "son_cekilen_etkinlikler": [],
+    "son_senkron": null
+  }
+}

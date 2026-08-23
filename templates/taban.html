@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block baslik %}Gelişim Takip{% endblock %}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <nav class="nav">
+    <a href="{{ url_for('index') }}">Zaman Takibi</a>
+    <a href="{{ url_for('heatmap_sayfasi') }}">Isı Haritası</a>
+    <a href="{{ url_for('istatistikler_sayfasi') }}">İstatistikler</a>
+    <a href="{{ url_for('hedefler_sayfasi') }}">Hedefler</a>
+  </nav>
+  <main class="icerik">
+    {% block icerik %}{% endblock %}
+  </main>
+</body>
+</html>

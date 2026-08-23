@@ -1,0 +1,38 @@
+{% extends "taban.html" %}
+{% block baslik %}Zaman Takibi{% endblock %}
+{% block icerik %}
+<h1>Zaman Takibi</h1>
+
+{% if aktif_oturum %}
+  <div class="aktif-oturum-kutu">
+    <p>Aktif oturum: <strong>{{ aktif_oturum.kategori }}</strong></p>
+    <p id="sayac" data-baslangic="{{ aktif_oturum.baslangic }}">00:00:00</p>
+    <form method="post" action="{{ url_for('oturum_durdur') }}">
+      <button type="submit">Durdur</button>
+    </form>
+  </div>
+{% else %}
+  <form method="post" action="{{ url_for('oturum_baslat') }}" class="baslat-formu">
+    <select name="kategori">
+      {% for k in kategoriler %}
+        <option value="{{ k }}">{{ k }}</option>
+      {% endfor %}
+    </select>
+    <button type="submit">Başlat</button>
+  </form>
+{% endif %}
+
+<h2>Son Oturumlar</h2>
+<table>
+  <thead><tr><th>Tarih</th><th>Kategori</th><th>Süre (dk)</th></tr></thead>
+  <tbody>
+    {% for o in son_oturumlar %}
+      <tr><td>{{ o.tarih }}</td><td>{{ o.kategori }}</td><td>{{ o.sure_dakika }}</td></tr>
+    {% else %}
+      <tr><td colspan="3">Henüz oturum kaydedilmedi.</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+<script src="{{ url_for('static', filename='timer.js') }}"></script>
+{% endblock %}

@@ -1,0 +1,20 @@
+{% extends "taban.html" %}
+{% block baslik %}Hedefler{% endblock %}
+{% block icerik %}
+<h1>Hedefler</h1>
+
+<p>Bu hafta: {{ haftalik_saat_bugune_kadar }} / {{ hedef.haftalik_saat }} saat ({{ ilerleme_yuzde }}%)</p>
+<div class="ilerleme-cubugu">
+  <div class="ilerleme-dolgu" style="width: {{ ilerleme_yuzde }}%;"></div>
+</div>
+
+<form method="post" action="{{ url_for('hedefler_sayfasi') }}">
+  <label>Haftalık hedef (saat)
+    <input type="number" step="0.5" min="0" name="haftalik_saat" value="{{ hedef.haftalik_saat }}">
+  </label>
+  <label>Toplam hedef (saat)
+    <input type="number" step="1" min="0" name="toplam_hedef_saat" value="{{ hedef.toplam_hedef_saat }}">
+  </label>
+  <button type="submit">Kaydet</button>
+</form>
+{% endblock %}

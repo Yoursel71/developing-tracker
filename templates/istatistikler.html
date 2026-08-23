@@ -1,0 +1,61 @@
+{% extends "taban.html" %}
+{% block baslik %}İstatistikler{% endblock %}
+{% block icerik %}
+<h1>İstatistikler</h1>
+
+{% if github_hatasi %}
+  <p class="uyari">GitHub verisi güncellenemedi: {{ github_hatasi }} (önbellekteki veri gösteriliyor)</p>
+{% endif %}
+
+<div class="kart-grid">
+  <div class="kart">
+    <h3>Ortalama Süre</h3>
+    <p>Tüm zamanlar: {{ istatistik.ortalama_tum_zamanlar }} dk/gün</p>
+    <p>Son 7 gün: {{ istatistik.ortalama_son_7_gun }} dk/gün</p>
+    <p>Son 30 gün: {{ istatistik.ortalama_son_30_gun }} dk/gün</p>
+  </div>
+
+  <div class="kart">
+    <h3>En Çok Çalışılan Gün</h3>
+    {% if istatistik.en_cok_calisilan_gun %}
+      <p>{{ istatistik.en_cok_calisilan_gun.tarih }} — {{ istatistik.en_cok_calisilan_gun.dakika }} dk</p>
+    {% else %}
+      <p>Henüz veri yok.</p>
+    {% endif %}
+  </div>
+
+  <div class="kart">
+    <h3>Kategori Dağılımı</h3>
+    <ul>
+      {% for kategori, dakika in istatistik.kategori_dagilimi.items() %}
+        <li>{{ kategori }}: {{ dakika }} dk</li>
+      {% else %}
+        <li>Henüz veri yok.</li>
+      {% endfor %}
+    </ul>
+  </div>
+
+  <div class="kart">
+    <h3>En Aktif Repo</h3>
+    {% if istatistik.en_aktif_repo %}
+      <p>{{ istatistik.en_aktif_repo.repo }} — {{ istatistik.en_aktif_repo.commit_sayisi }} commit</p>
+    {% else %}
+      <p>GitHub verisi yok.</p>
+    {% endif %}
+    <form method="post" action="{{ url_for('github_yenile') }}">
+      <button type="submit">GitHub'ı Yenile</button>
+    </form>
+  </div>
+
+  <div class="kart">
+    <h3>Tahmini Bitiş</h3>
+    {% if istatistik.eta.tamamlandi %}
+      <p>Hedefe ulaşıldı!</p>
+    {% elif istatistik.eta.tahmini_hafta is none %}
+      <p>Tahmin için yeterli veri yok.</p>
+    {% else %}
+      <p>Bu tempoyle gidersen, hedefi yaklaşık <strong>{{ istatistik.eta.tahmini_hafta }} hafta</strong> sonra bitirirsin. (Kalan: {{ istatistik.eta.kalan_saat }} saat)</p>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

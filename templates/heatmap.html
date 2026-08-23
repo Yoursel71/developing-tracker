@@ -1,0 +1,19 @@
+{% extends "taban.html" %}
+{% block baslik %}Isı Haritası{% endblock %}
+{% block icerik %}
+<h1>Isı Haritası</h1>
+
+<div class="gorunum-secici">
+  <a href="{{ url_for('heatmap_sayfasi', gorunum='haftalik') }}" class="{{ 'aktif' if gorunum == 'haftalik' else '' }}">Haftalık</a>
+  <a href="{{ url_for('heatmap_sayfasi', gorunum='aylik') }}" class="{{ 'aktif' if gorunum == 'aylik' else '' }}">Aylık</a>
+</div>
+
+<div class="heatmap-grid heatmap-{{ gorunum }}">
+  {% for gun in gunler %}
+    <div class="heatmap-hucre renk-{{ gun.renk }} {{ 'commit-var' if gun.commit_sayisi > 0 else '' }}"
+         title="{{ gun.tarih }} — {{ gun.dakika }} dk{% if gun.commit_sayisi > 0 %}, {{ gun.commit_sayisi }} commit{% endif %}">
+    </div>
+  {% endfor %}
+</div>
+<p class="ipucu">Koyu yeşil kareler daha yoğun çalışmayı, koyu kenarlıklı kareler o gün GitHub'a commit atıldığını gösterir.</p>
+{% endblock %}

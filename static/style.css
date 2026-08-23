@@ -1,0 +1,102 @@
+:root {
+  --gri: #ebedf0;
+  --acik-yesil: #9be9a8;
+  --orta-yesil: #40c463;
+  --koyu-yesil: #216e39;
+  --metin: #24292f;
+  --arka-plan: #ffffff;
+  --kenar: #d0d7de;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  font-family: -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+  margin: 0;
+  color: var(--metin);
+  background: var(--arka-plan);
+}
+
+.nav {
+  display: flex;
+  gap: 1.5rem;
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid var(--kenar);
+}
+
+.nav a {
+  color: var(--metin);
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.nav a:hover { text-decoration: underline; }
+
+.icerik {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 1.5rem;
+}
+
+table { border-collapse: collapse; width: 100%; margin-top: 1rem; }
+th, td { border: 1px solid var(--kenar); padding: 0.5rem; text-align: left; }
+
+.aktif-oturum-kutu, .kart {
+  border: 1px solid var(--kenar);
+  border-radius: 6px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+}
+
+#sayac { font-size: 2rem; font-weight: bold; }
+
+.kart-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1rem;
+}
+
+.gorunum-secici { margin-bottom: 1rem; }
+.gorunum-secici a {
+  margin-right: 1rem;
+  color: var(--metin);
+  text-decoration: none;
+  padding-bottom: 2px;
+}
+.gorunum-secici a.aktif { border-bottom: 2px solid var(--koyu-yesil); font-weight: 600; }
+
+.heatmap-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 3px;
+}
+
+.heatmap-hucre {
+  width: 100%;
+  padding-top: 100%;
+  position: relative;
+  border-radius: 3px;
+}
+.renk-gri { background: var(--gri); }
+.renk-acik-yesil { background: var(--acik-yesil); }
+.renk-orta-yesil { background: var(--orta-yesil); }
+.renk-koyu-yesil { background: var(--koyu-yesil); }
+.commit-var { box-shadow: inset 0 0 0 2px #57606a; }
+
+.ipucu { color: #57606a; font-size: 0.9rem; }
+
+.ilerleme-cubugu {
+  background: var(--gri);
+  border-radius: 6px;
+  height: 14px;
+  overflow: hidden;
+  margin: 0.5rem 0 1.5rem;
+}
+.ilerleme-dolgu { background: var(--koyu-yesil); height: 100%; }
+
+.uyari { color: #9a6700; background: #fff8c5; padding: 0.5rem 1rem; border-radius: 6px; }
+
+form { margin-top: 0.5rem; }
+label { display: block; margin-bottom: 0.5rem; }
+input, select, button { font-size: 1rem; padding: 0.4rem; }
+button { cursor: pointer; }
