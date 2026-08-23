@@ -5,6 +5,9 @@ on:
     branches: ["**"]
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   derle:
     runs-on: windows-latest
@@ -32,3 +35,16 @@ jobs:
         with:
           name: GelisimTakip-exe
           path: dist/GelisimTakip.exe
+
+      - name: Release'e ekle (her başarılı derlemede günceller)
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: masaustu-son-surum
+          name: "Gelişim Takip - Masaüstü (son derleme)"
+          body: >-
+            Bu release her başarılı derlemede otomatik güncellenir ve her
+            zaman en son commit'ten üretilen .exe'yi içerir.
+            Commit: ${{ github.sha }}
+          files: dist/GelisimTakip.exe
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

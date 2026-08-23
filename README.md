@@ -8,11 +8,17 @@ tahmin üreten bir masaüstü uygulaması.
 ## .exe olarak indirme (Windows)
 
 Her push'ta GitHub Actions (`.github/workflows/exe-derle.yml`) Windows
-üzerinde otomatik bir `.exe` derler:
+üzerinde otomatik bir `.exe` derler ve **Releases** sayfasındaki
+`masaustu-son-surum` adlı release'i günceller — bu release her zaman en son
+commit'ten üretilen `.exe`'yi içerir:
 
-1. Depo → **Actions** sekmesi → en son "exe-derle" çalıştırması.
-2. **Artifacts** bölümünden `GelisimTakip-exe` dosyasını indir, içindeki
-   `GelisimTakip.exe`'yi çalıştır.
+1. Depo → sağ taraftaki **Releases** bölümü → "Gelişim Takip - Masaüstü
+   (son derleme)".
+2. Ekli `GelisimTakip.exe` dosyasını indir ve çalıştır.
+
+Alternatif olarak: Depo → **Actions** sekmesi → en son "exe-derle"
+çalıştırması → **Artifacts** bölümünden `GelisimTakip-exe` indirilebilir
+(bu artifact 90 gün sonra otomatik silinir, release ise kalıcıdır).
 
 İlk açılışta bir kurulum sihirbazı seni karşılar: hedeflerini, GitHub
 kullanıcı adını, kod yazdığın program(lar)ı ve kurs aldığın site(leri)
