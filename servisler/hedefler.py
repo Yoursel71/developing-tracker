@@ -20,34 +20,32 @@ def haftalik_toplam_dakika(oturumlar, referans_tarih=None):
 
 
 def hedefleri_guncelle(haftalik_saat, toplam_hedef_saat):
-    veri = json_deposu.oku()
-    veri["hedefler"]["haftalik_saat"] = haftalik_saat
-    veri["hedefler"]["toplam_hedef_saat"] = toplam_hedef_saat
-    json_deposu.yaz(veri)
-    return veri["hedefler"]
+    with json_deposu.guncelle() as veri:
+        veri["hedefler"]["haftalik_saat"] = haftalik_saat
+        veri["hedefler"]["toplam_hedef_saat"] = toplam_hedef_saat
+        return veri["hedefler"]
 
 
 def haftasonu_bildirimini_kontrol_et():
     """Haftanın son 2 gününde (Cmt/Paz), hedef karşılanmadıysa günde en fazla 1 bildirim gönderir."""
-    veri = json_deposu.oku()
     bugun = date.today()
     if bugun.weekday() < 5:
         return False
 
-    hedefler = veri["hedefler"]
-    if hedefler.get("son_bildirim_tarihi") == bugun.isoformat():
-        return False
+    with json_deposu.guncelle() as veri:
+        hedefler = veri["hedefler"]
+        if hedefler.get("son_bildirim_tarihi") == bugun.isoformat():
+            return False
 
-    toplam_dakika = haftalik_toplam_dakika(veri["oturumlar"], bugun)
-    hedef_dakika = hedefler["haftalik_saat"] * 60
-    if toplam_dakika >= hedef_dakika:
-        return False
+        toplam_dakika = haftalik_toplam_dakika(veri["oturumlar"], bugun)
+        hedef_dakika = hedefler["haftalik_saat"] * 60
+        if toplam_dakika >= hedef_dakika:
+            return False
 
-    kalan_saat = round((hedef_dakika - toplam_dakika) / 60, 1)
-    gonderildi = bildirim.bildirim_gonder(
-        "Haftalık hedef uyarısı",
-        f"Bu hafta hedefine {kalan_saat} saat kaldı, hafta bitiyor!",
-    )
-    hedefler["son_bildirim_tarihi"] = bugun.isoformat()
-    json_deposu.yaz(veri)
-    return gonderildi
+        kalan_saat = round((hedef_dakika - toplam_dakika) / 60, 1)
+        gonderildi = bildirim.bildirim_gonder(
+            "Haftalık hedef uyarısı",
+            f"Bu hafta hedefine {kalan_saat} saat kaldı, hafta bitiyor!",
+        )
+        hedefler["son_bildirim_tarihi"] = bugun.isoformat()
+        return gonderildi

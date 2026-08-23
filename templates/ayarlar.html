@@ -1,0 +1,79 @@
+{% extends "taban.html" %}
+{% block baslik %}Ayarlar{% endblock %}
+{% block icerik %}
+<h1>Ayarlar</h1>
+
+<form method="post" action="{{ url_for('ayarlar_sayfasi') }}">
+  <h2>Hedefler</h2>
+  <label>Haftalık hedef (saat)
+    <input type="number" step="0.5" min="0" name="haftalik_saat" value="{{ hedef.haftalik_saat }}">
+  </label>
+  <label>Toplam hedef (saat)
+    <input type="number" step="1" min="0" name="toplam_hedef_saat" value="{{ hedef.toplam_hedef_saat }}">
+  </label>
+
+  <h2>GitHub Kullanıcı Adı</h2>
+  <label>GitHub kullanıcı adı
+    <input type="text" name="github_kullanici" value="{{ github_kullanici }}">
+  </label>
+
+  <h2>Kod Yazdığın Program(lar)</h2>
+  <div class="bilinen-editorler">
+    {% for ad, islem in bilinen_editorler.items() %}
+      <button type="button" class="hizli-editor-btn" data-program-adi="{{ ad }}" data-islem-adi="{{ islem }}">+ {{ ad }}</button>
+    {% endfor %}
+    <button type="button" class="hizli-editor-btn" data-program-adi="" data-islem-adi="">+ Diğer</button>
+  </div>
+  <div class="satir-grubu" id="editor-satirlari">
+    {% for e in izleme.editorler %}
+    <div class="satir">
+      <input type="text" name="editor_program_adi[]" placeholder="Program adı" value="{{ e.program_adi }}">
+      <input type="text" name="editor_islem_adi[]" placeholder="İşlem adı (ör. Code.exe)" value="{{ e.islem_adi }}">
+      <select name="editor_kategori[]">
+        {% for k in kategoriler %}<option value="{{ k }}" {{ 'selected' if k == e.kategori else '' }}>{{ k }}</option>{% endfor %}
+      </select>
+      <button type="button" class="satir-sil">✕</button>
+    </div>
+    {% endfor %}
+  </div>
+  <template id="editor-satir-sablonu">
+    <div class="satir">
+      <input type="text" name="editor_program_adi[]" placeholder="Program adı">
+      <input type="text" name="editor_islem_adi[]" placeholder="İşlem adı (ör. Code.exe)">
+      <select name="editor_kategori[]">
+        {% for k in kategoriler %}<option value="{{ k }}">{{ k }}</option>{% endfor %}
+      </select>
+      <button type="button" class="satir-sil">✕</button>
+    </div>
+  </template>
+
+  <h2>Kurs Aldığın Site(ler)</h2>
+  <p class="ipucu">Bunun çalışması için tarayıcı eklentisinin kurulu olması
+  gerekir (<code>tarayici-eklentisi/README.md</code>).</p>
+  <div class="satir-grubu" id="site-satirlari">
+    {% for s in izleme.siteler %}
+    <div class="satir">
+      <input type="text" name="site_alan_adi[]" placeholder="Alan adı (ör. udemy.com)" value="{{ s.alan_adi }}">
+      <select name="site_kategori[]">
+        {% for k in kategoriler %}<option value="{{ k }}" {{ 'selected' if k == s.kategori else '' }}>{{ k }}</option>{% endfor %}
+      </select>
+      <button type="button" class="satir-sil">✕</button>
+    </div>
+    {% endfor %}
+  </div>
+  <template id="site-satir-sablonu">
+    <div class="satir">
+      <input type="text" name="site_alan_adi[]" placeholder="Alan adı (ör. udemy.com)">
+      <select name="site_kategori[]">
+        {% for k in kategoriler %}<option value="{{ k }}">{{ k }}</option>{% endfor %}
+      </select>
+      <button type="button" class="satir-sil">✕</button>
+    </div>
+  </template>
+  <button type="button" class="site-satir-ekle-btn">+ Site Ekle</button>
+
+  <p><button type="submit">Kaydet</button></p>
+</form>
+
+<script src="{{ url_for('static', filename='kurulum.js') }}"></script>
+{% endblock %}

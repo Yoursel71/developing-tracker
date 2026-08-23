@@ -11,6 +11,7 @@
 <div class="heatmap-grid heatmap-{{ gorunum }}">
   {% for gun in gunler %}
     <div class="heatmap-hucre renk-{{ gun.renk }} {{ 'commit-var' if gun.commit_sayisi > 0 else '' }}"
+         style="--gecikme: {{ loop.index }};"
          title="{{ gun.tarih }} — {{ gun.dakika }} dk{% if gun.commit_sayisi > 0 %}, {{ gun.commit_sayisi }} commit{% endif %}">
     </div>
   {% endfor %}

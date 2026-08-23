@@ -3,15 +3,27 @@
 {% block icerik %}
 <h1>Zaman Takibi</h1>
 
-{% if aktif_oturum %}
-  <div class="aktif-oturum-kutu">
-    <p>Aktif oturum: <strong>{{ aktif_oturum.kategori }}</strong></p>
-    <p id="sayac" data-baslangic="{{ aktif_oturum.baslangic }}">00:00:00</p>
-    <form method="post" action="{{ url_for('oturum_durdur') }}">
-      <button type="submit">Durdur</button>
-    </form>
+{% if aktif_oturumlar %}
+  <div class="aktif-oturumlar">
+    {% for kategori, oturum in aktif_oturumlar.items() %}
+      <div class="aktif-oturum-kutu belir">
+        <p>
+          <strong>{{ kategori }}</strong>
+          {% if oturum.kaynak == "otomatik" %}
+            <span class="rozet rozet-otomatik"><span class="nabiz-nokta"></span>otomatik izleniyor</span>
+          {% endif %}
+        </p>
+        <p class="sayac" data-baslangic="{{ oturum.baslangic }}">00:00:00</p>
+        <form method="post" action="{{ url_for('oturum_durdur') }}">
+          <input type="hidden" name="kategori" value="{{ kategori }}">
+          <button type="submit">Durdur</button>
+        </form>
+      </div>
+    {% endfor %}
   </div>
-{% else %}
+{% endif %}
+
+{% if kategoriler %}
   <form method="post" action="{{ url_for('oturum_baslat') }}" class="baslat-formu">
     <select name="kategori">
       {% for k in kategoriler %}

@@ -1,0 +1,11 @@
+{
+  "manifest_version": 3,
+  "name": "Gelişim Takip - Site İzleyici",
+  "version": "1.0.0",
+  "description": "Takip edilen kurs sitesi sekmeleri açıkken Gelişim Takip masaüstü uygulamasına bildirir.",
+  "permissions": ["tabs", "alarms"],
+  "host_permissions": ["http://127.0.0.1/*"],
+  "background": {
+    "service_worker": "arkaplan.js"
+  }
+}
