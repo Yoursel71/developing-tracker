@@ -1,135 +1,152 @@
 <!doctype html>
-<html lang="tr">
+<html lang="tr" data-tema="koyu">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Kurulum — Gelişim Takip</title>
+  <title>Kurulum · Gelişim Takip</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><text y='26' font-size='26'>📈</text></svg>">
 </head>
-<body class="kurulum-govde">
-  <div class="sihirbaz belir">
-    <div class="adim-noktalari">
-      {% for i in range(6) %}<span class="adim-nokta {{ 'aktif' if i == 0 else '' }}"></span>{% endfor %}
+<body class="sihirbaz-govde">
+<main class="sihirbaz">
+  <div class="adim-gostergesi">
+    <div class="adim-noktalari" aria-hidden="true">
+      {% for i in range(6) %}<span class="adim-nokta {{ 'aktif' if i == 0 }}"></span>{% endfor %}
     </div>
-    <form method="post" action="{{ url_for('kurulum_sayfasi') }}">
-
-      <div class="adim aktif">
-        <h1>Gelişim Takip'e Hoş Geldin</h1>
-        <p>Birkaç soruyla seni ve çalışma alışkanlıklarını tanıyalım; sonra
-        zamanlayıcı kod yazdığın programı ya da kurs sitesini açtığında
-        kendiliğinden çalışacak, kapattığında duracak.</p>
-        <button type="button" class="ileri-btn">Başla</button>
-      </div>
-
-      <div class="adim">
-        <h2>Hedeflerin</h2>
-        <label>Haftalık hedef (saat)
-          <input type="number" step="0.5" min="0" name="haftalik_saat" value="{{ hedef.haftalik_saat }}">
-        </label>
-        <label>Toplam hedef (saat)
-          <input type="number" step="1" min="0" name="toplam_hedef_saat" value="{{ hedef.toplam_hedef_saat }}">
-        </label>
-        <div class="adim-butonlari">
-          <button type="button" class="geri-btn">Geri</button>
-          <button type="button" class="ileri-btn">İleri</button>
-        </div>
-      </div>
-
-      <div class="adim">
-        <h2>GitHub Kullanıcı Adın</h2>
-        <label>GitHub kullanıcı adı
-          <input type="text" name="github_kullanici" value="{{ github_kullanici }}" placeholder="ör. Yoursel71">
-        </label>
-        <div class="adim-butonlari">
-          <button type="button" class="geri-btn">Geri</button>
-          <button type="button" class="ileri-btn">İleri</button>
-        </div>
-      </div>
-
-      <div class="adim">
-        <h2>Kod Yazdığın Program(lar)</h2>
-        <p class="ipucu">Bir programı seç ya da "Diğer" ile kendi işlem adını
-        gir, hangi kategoriye sayılacağını seç. Program açık olduğu sürece
-        zamanlayıcı otomatik çalışır.</p>
-        <div class="bilinen-editorler">
-          {% for ad, islem in bilinen_editorler.items() %}
-            <button type="button" class="hizli-editor-btn" data-program-adi="{{ ad }}" data-islem-adi="{{ islem }}">+ {{ ad }}</button>
-          {% endfor %}
-          <button type="button" class="hizli-editor-btn" data-program-adi="" data-islem-adi="">+ Diğer</button>
-        </div>
-        <div class="satir-grubu" id="editor-satirlari">
-          {% for e in izleme.editorler %}
-          <div class="satir">
-            <input type="text" name="editor_program_adi[]" placeholder="Program adı" value="{{ e.program_adi }}">
-            <input type="text" name="editor_islem_adi[]" placeholder="İşlem adı (ör. Code.exe)" value="{{ e.islem_adi }}">
-            <select name="editor_kategori[]">
-              {% for k in kategoriler %}<option value="{{ k }}" {{ 'selected' if k == e.kategori else '' }}>{{ k }}</option>{% endfor %}
-            </select>
-            <button type="button" class="satir-sil">✕</button>
-          </div>
-          {% endfor %}
-        </div>
-        <template id="editor-satir-sablonu">
-          <div class="satir">
-            <input type="text" name="editor_program_adi[]" placeholder="Program adı">
-            <input type="text" name="editor_islem_adi[]" placeholder="İşlem adı (ör. Code.exe)">
-            <select name="editor_kategori[]">
-              {% for k in kategoriler %}<option value="{{ k }}">{{ k }}</option>{% endfor %}
-            </select>
-            <button type="button" class="satir-sil">✕</button>
-          </div>
-        </template>
-        <div class="adim-butonlari">
-          <button type="button" class="geri-btn">Geri</button>
-          <button type="button" class="ileri-btn">İleri</button>
-        </div>
-      </div>
-
-      <div class="adim">
-        <h2>Kurs Aldığın Site(ler)</h2>
-        <p class="ipucu">Alan adını yaz (ör. udemy.com) ve kategori seç. Bunun
-        çalışması için tarayıcı eklentisini de kurman gerekiyor —
-        <code>tarayici-eklentisi/README.md</code> dosyasında adımlar var.</p>
-        <div class="satir-grubu" id="site-satirlari">
-          {% for s in izleme.siteler %}
-          <div class="satir">
-            <input type="text" name="site_alan_adi[]" placeholder="Alan adı (ör. udemy.com)" value="{{ s.alan_adi }}">
-            <select name="site_kategori[]">
-              {% for k in kategoriler %}<option value="{{ k }}" {{ 'selected' if k == s.kategori else '' }}>{{ k }}</option>{% endfor %}
-            </select>
-            <button type="button" class="satir-sil">✕</button>
-          </div>
-          {% endfor %}
-        </div>
-        <template id="site-satir-sablonu">
-          <div class="satir">
-            <input type="text" name="site_alan_adi[]" placeholder="Alan adı (ör. udemy.com)">
-            <select name="site_kategori[]">
-              {% for k in kategoriler %}<option value="{{ k }}">{{ k }}</option>{% endfor %}
-            </select>
-            <button type="button" class="satir-sil">✕</button>
-          </div>
-        </template>
-        <button type="button" class="site-satir-ekle-btn">+ Site Ekle</button>
-        <div class="adim-butonlari">
-          <button type="button" class="geri-btn">Geri</button>
-          <button type="button" class="ileri-btn">İleri</button>
-        </div>
-      </div>
-
-      <div class="adim">
-        <h2>Hazırsın!</h2>
-        <p>Ayarlarını istediğin zaman üstteki "Ayarlar" sayfasından
-        değiştirebilirsin.</p>
-        <div class="adim-butonlari">
-          <button type="button" class="geri-btn">Geri</button>
-          <button type="submit">Kurulumu Tamamla</button>
-        </div>
-      </div>
-
-    </form>
+    <span class="adim-sayaci" id="adim-sayaci" aria-live="polite">Adım 1 / 6</span>
   </div>
 
-  <script src="{{ url_for('static', filename='kurulum.js') }}"></script>
+  <form method="post" action="{{ url_for('kurulum_sayfasi') }}" id="kurulum-formu">
+
+    <section class="adim aktif" tabindex="-1" aria-label="Hoş geldin">
+      <h1>Gelişim Takip'e hoş geldin</h1>
+      <p>Birkaç soruyla kurulumu tamamlayalım. Sonrasında zamanlayıcı, kod
+         yazdığın programı ya da kurs siteni açtığında kendiliğinden çalışacak;
+         klavyeden elini çektiğinde duraklayacak, kapattığında duracak.</p>
+      <div class="adim-butonlari">
+        <span></span>
+        <button type="button" class="btn btn-ana ileri-btn">Başlayalım</button>
+      </div>
+    </section>
+
+    <section class="adim" tabindex="-1" aria-label="Hedefler">
+      <h1>Haftalık hedefin</h1>
+      <p>Gerçekçi bir sayı seç — sonradan değiştirebilirsin.</p>
+      <div class="alan">
+        <label for="haftalik_saat">Haftada kaç saat?</label>
+        <input type="number" id="haftalik_saat" name="haftalik_saat" step="0.5" min="0" max="168"
+               value="{{ hedef.haftalik_saat }}" data-zorunlu>
+      </div>
+      <div class="adim-butonlari">
+        <button type="button" class="btn geri-btn">Geri</button>
+        <button type="button" class="btn btn-ana ileri-btn">İleri</button>
+      </div>
+    </section>
+
+    <section class="adim" tabindex="-1" aria-label="GitHub">
+      <h1>GitHub kullanıcı adın</h1>
+      <p>Commit geçmişin ısı haritasına ikinci bir katman olarak eklenir.
+         Boş bırakabilirsin.</p>
+      <div class="alan">
+        <label for="github_kullanici">Kullanıcı adı</label>
+        <input type="text" id="github_kullanici" name="github_kullanici"
+               value="{{ github_kullanici }}" placeholder="kullaniciadi">
+      </div>
+      <div class="adim-butonlari">
+        <button type="button" class="btn geri-btn">Geri</button>
+        <button type="button" class="btn btn-ana ileri-btn">İleri</button>
+      </div>
+    </section>
+
+    <section class="adim" tabindex="-1" aria-label="Programlar">
+      <h1>Kod yazdığın programlar</h1>
+      <p>Program açıkken zamanlayıcı otomatik çalışır. Her program yalnızca bir
+         kategoriye bağlanabilir.</p>
+      <div class="cip-satiri">
+        {% for ad, islem in bilinen_editorler.items() %}
+          <button type="button" class="cip" data-editor-ekle data-program="{{ ad }}" data-islem="{{ islem }}">+ {{ ad }}</button>
+        {% endfor %}
+        <button type="button" class="cip" data-editor-ekle data-program="" data-islem="">+ Diğer</button>
+      </div>
+      <div class="satir-grubu" id="editor-satirlari"></div>
+      <template id="editor-satir-sablonu">
+        <div class="satir">
+          <input type="text" name="editor_program_adi[]" placeholder="Program adı" aria-label="Program adı">
+          <input type="text" name="editor_islem_adi[]" placeholder="İşlem adı (Code.exe)" aria-label="İşlem adı">
+          <select name="editor_kategori[]" aria-label="Kategori">
+            {% for k in kategoriler %}<option value="{{ k }}">{{ k }}</option>{% endfor %}
+          </select>
+          <button type="button" class="satir-sil" aria-label="Bu programı listeden çıkar">✕</button>
+        </div>
+      </template>
+      <div class="adim-butonlari">
+        <button type="button" class="btn geri-btn">Geri</button>
+        <button type="button" class="btn btn-ana ileri-btn">İleri</button>
+      </div>
+    </section>
+
+    <section class="adim" tabindex="-1" aria-label="Siteler">
+      <h1>Kurs siteleri</h1>
+      <p>Alan adı yaz (örn. <code class="kod">udemy.com</code>). Bunun çalışması için
+         tarayıcı eklentisini de kurman gerekiyor — kurulumdan sonra Ayarlar
+         sayfasında adımlar ve anahtarın var.</p>
+      <div class="cip-satiri">
+        {% for ad, alan in bilinen_siteler.items() %}
+          <button type="button" class="cip" data-site-ekle data-alan="{{ alan }}">+ {{ ad }}</button>
+        {% endfor %}
+        <button type="button" class="cip" data-site-ekle data-alan="">+ Diğer</button>
+      </div>
+      <div class="satir-grubu" id="site-satirlari"></div>
+      <template id="site-satir-sablonu">
+        <div class="satir site-satir">
+          <input type="text" name="site_alan_adi[]" placeholder="udemy.com" aria-label="Alan adı">
+          <select name="site_kategori[]" aria-label="Kategori">
+            {% for k in kategoriler %}<option value="{{ k }}">{{ k }}</option>{% endfor %}
+          </select>
+          <button type="button" class="satir-sil" aria-label="Bu siteyi listeden çıkar">✕</button>
+        </div>
+      </template>
+      <div class="adim-butonlari">
+        <button type="button" class="btn geri-btn">Geri</button>
+        <button type="button" class="btn btn-ana ileri-btn">İleri</button>
+      </div>
+    </section>
+
+    <section class="adim" tabindex="-1" aria-label="Yol haritası">
+      <h1>Öğrenme yol haritan</h1>
+      <p>"135 saat" tek başına soyut bir sayı. Hazır bir Python müfredatı
+         ekleyelim mi? Her konunun tahmini süresi var; tamamladıkça işaretlersin
+         ve tahmin "sıradaki konuyu ~3 günde bitirirsin" diye somutlaşır.</p>
+
+      <div class="alan">
+        <label class="onay">
+          <input type="checkbox" name="yol_haritasi_ekle" value="1" checked>
+          <span>Hazır Python yol haritasını ekle
+            <span class="aciklama">{{ yol_haritasi_taslak | length }} konu ·
+              toplam {{ yol_haritasi_taslak | sum(attribute=1) }} saat · sonradan düzenleyebilirsin</span>
+          </span>
+        </label>
+      </div>
+
+      <div class="kart" style="max-height: 190px; overflow-y: auto; font-size: var(--olcek-xs)">
+        {% for ad, saat in yol_haritasi_taslak %}
+          <div style="display:flex;justify-content:space-between;padding:2px 0;color:var(--metin-2)">
+            <span>{{ ad }}</span><span>{{ saat }} s</span>
+          </div>
+        {% endfor %}
+      </div>
+
+      <div class="adim-butonlari">
+        <button type="button" class="btn geri-btn">Geri</button>
+        <button type="submit" class="btn btn-ana">Kurulumu tamamla</button>
+      </div>
+    </section>
+
+  </form>
+</main>
+
+<div class="toast-alani" id="toast-alani" aria-live="polite"></div>
+<script>window.BASLANGIC_BILDIRIMLERI = [];</script>
+<script src="{{ url_for('static', filename='uygulama.js') }}"></script>
 </body>
 </html>

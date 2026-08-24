@@ -1,113 +1,130 @@
-# Gelişim Takip Uygulaması
+# Gelişim Takip
 
-Python/yazılım öğrenme sürecinde harcanan zamanı takip eden, GitHub
-aktivitesiyle görselleştiren, kod yazdığın program veya kurs sitesini
-açtığında zamanlayıcıyı **otomatik başlatıp durduran** ve tempoya göre
-tahmin üreten bir masaüstü uygulaması.
+Python/yazılım öğrenme sürecinde harcanan zamanı **dürüstçe** ölçen bir
+Windows masaüstü uygulaması. Kod yazdığın programı ya da kurs siteni
+açtığında zamanlayıcı kendiliğinden başlar, klavyeden elini çektiğinde
+duraklar, kapattığında durur.
 
-## .exe olarak indirme (Windows)
+![Panel](https://img.shields.io/badge/arayüz-koyu%20tema-1f6feb) ![Test](https://img.shields.io/badge/test-157%20passing-3fb950)
 
-Her push'ta GitHub Actions (`.github/workflows/exe-derle.yml`) Windows
-üzerinde otomatik bir `.exe` derler ve **Releases** sayfasındaki
-`masaustu-son-surum` adlı release'i günceller — bu release her zaman en son
-commit'ten üretilen `.exe`'yi içerir:
+## Ne yapar
 
-1. Depo → sağ taraftaki **Releases** bölümü → "Gelişim Takip - Masaüstü
-   (son derleme)".
-2. Ekli `GelisimTakip.exe` dosyasını indir ve çalıştır.
+- **Otomatik zaman takibi** — VS Code, PyCharm gibi programlar açıkken ya da
+  Udemy gibi kurs siteleri sekmede açıkken süre kendiliğinden işler.
+- **Boşta kalma algılama** — 10 dakika (ayarlanabilir) klavye/fare hareketi
+  olmazsa sayaç duraklar. Gece açık unutulan editör saat yazmaz; bu olmadan
+  tüm istatistikler anlamsızlaşırdı.
+- **GitHub tarzı ısı haritası** — 7 satır × 53 hafta, kendi dağılımına göre
+  ölçeklenen renkler, GitHub commit'lerin ikinci katman olarak.
+- **Seri (streak)** — ardışık çalışma günleri, güncel ve en uzun seri.
+- **İstatistikler** — günlük trend, kategori dağılımı, "en verimli günün
+  Salı", "en çok 21:00–22:00 arası çalışıyorsun".
+- **Akıllı tahmin** — mevcut tempoyla ve haftalık hedefine uyarsan olmak
+  üzere iki senaryo, iyimser–kötümser aralık ve tahmini tarih.
+- **Öğrenme yol haritası** — her biri tahmini saatli konular; toplam hedef
+  bunlardan hesaplanır ve "sıradaki konuyu ~3 günde bitirirsin" der.
+- **Oturum notları ve düzenleme** — yanlış kaydı düzelt, sil veya elle ekle.
 
-Alternatif olarak: Depo → **Actions** sekmesi → en son "exe-derle"
-çalıştırması → **Artifacts** bölümünden `GelisimTakip-exe` indirilebilir
-(bu artifact 90 gün sonra otomatik silinir, release ise kalıcıdır).
+## Kurulum (Windows)
 
-İlk açılışta bir kurulum sihirbazı seni karşılar: hedeflerini, GitHub
-kullanıcı adını, kod yazdığın program(lar)ı ve kurs aldığın site(leri)
-sorar. Bunlardan sonra zamanlayıcı, o program/site açıkken **otomatik**
-çalışır; kapatınca (yaklaşık 1 dakika içinde) durur. Ayarları daha sonra
-uygulama içindeki **Ayarlar** sayfasından değiştirebilirsin.
+1. Depo → **Releases** → **Gelişim Takip — Masaüstü (son derleme)**
+2. `GelisimTakip.exe` dosyasını indir ve çalıştır.
+3. İlk açılışta kurulum sihirbazı hedeflerini, GitHub kullanıcı adını ve
+   takip edilecek program/siteleri sorar.
 
-Kurs sitesi takibinin çalışması için ayrıca tarayıcı eklentisini kurman
-gerekir — bkz. `tarayici-eklentisi/README.md`.
+> **SmartScreen uyarısı:** `.exe` imzalı olmadığı için Windows "bilinmeyen
+> yayımcı" uyarısı gösterir. "Daha fazla bilgi" → "Yine de çalıştır" ile
+> açabilirsin.
 
-## Kaynaktan çalıştırma (geliştirme / diğer işletim sistemleri)
+Uygulama pencereyi kapatınca **sistem tepsisine iner** ve takibe devam
+eder; tamamen çıkmak için tepsi ikonuna sağ tıklayıp "Çıkış" de.
+Ayarlar'dan "Windows açılışında otomatik başlat" seçeneğini açabilirsin.
+
+## Tarayıcı eklentisi (kurs siteleri için)
+
+Site takibi için `tarayici-eklentisi/` klasöründeki eklentiyi kurman
+gerekir — adımlar [tarayici-eklentisi/README.md](tarayici-eklentisi/README.md)
+dosyasında. Eklenti, Ayarlar sayfasındaki **API anahtarını** ister; bu
+anahtar olmadan hiçbir site uygulamaya veri gönderemez.
+
+## Verilerin nerede
+
+| Ortam | Konum |
+|---|---|
+| Windows (.exe) | `%LOCALAPPDATA%\GelisimTakip\` |
+| macOS | `~/Library/Application Support/GelisimTakip/` |
+| Linux | `~/.local/share/GelisimTakip/` |
+| Geliştirme | depo içindeki `data/` |
+
+Bu klasörde `veri.json`, `yedekler/` ve `uygulama.log` bulunur. Veri
+**atomik olarak** yazılır (çökme yarım dosya bırakmaz), günde bir yedek
+alınır (son 10 tutulur) ve dosya bozulursa otomatik olarak en yeni sağlam
+yedeğe dönülür. Ayarlar'dan CSV/JSON dışa aktarabilir, yedekten geri
+yükleyebilirsin.
+
+`GELISIM_TAKIP_VERI_DIZINI` ortam değişkeniyle konumu değiştirebilirsin.
+`.exe`'nin yanına `tasinabilir.txt` koyarsan veri exe'nin yanına yazılır
+(USB'den taşınabilir kullanım).
+
+## Kaynaktan çalıştırma
 
 ```bash
 python -m venv .venv
-source .venv/bin/activate  # Windows: .venv\Scripts\activate
-pip install -r requirements.txt
-python app.py       # tarayıcıda çalışan Flask sürümü (http://127.0.0.1:57391)
-# veya
-python masaustu.py  # native pencereli masaüstü sürümü (yalnızca Windows'ta pencere açar)
+source .venv/bin/activate          # Windows: .venv\Scripts\activate
+pip install -r requirements-dev.txt
+
+python app.py        # tarayıcı sürümü → http://127.0.0.1:57391
+python masaustu.py   # native pencere + tepsi ikonu (Windows)
+python -m pytest testler/
 ```
 
-`pywebview` ve `pywin32` Windows'a özgü masaüstü kabuğu içindir; sadece
-`app.py`'yi çalıştırmak (tarayıcı sürümü) her işletim sisteminde çalışır.
+## Nasıl çalışır
 
-## Veri
+**Zaman ölçümü.** Aktif oturum her tarama turunda (10 sn) diske işaretlenir:
+`son_gorulme` ve `birikmis_saniye`. Böylece çökmede tüm oturum değil, en
+fazla bir tur kaybedilir; açılışta eski `son_gorulme` taşıyan oturumlar
+otomatik kapatılır. Bu olmadan Cuma çöken bir uygulama Pazartesi 63 saatlik
+sahte bir oturum yazardı.
 
-Tüm veriler `data/veri.json` dosyasında saklanır (ilk çalıştırmada otomatik
-oluşturulur, `.gitignore` ile depoya dahil edilmez). `data/veri.ornek.json`
-dosyası şemayı göstermek için örnek olarak bırakılmıştır.
+**Durum makinesi.**
 
-## Otomatik İzleme
+```
+YOK ──(program/site algılandı)──> ÇALIŞIYOR
+ÇALIŞIYOR ──(boşta eşiği)──> BOŞTA           # süre birikmez
+BOŞTA ──(klavye/fare)──> ÇALIŞIYOR           # kesintisiz devam
+ÇALIŞIYOR ──(algılanmıyor)──> KAYIP          # 60 sn grace
+KAYIP ──(tekrar algılandı)──> ÇALIŞIYOR
+KAYIP ──(grace doldu)──> YOK                 # oturum kaydedilir
+```
 
-- **Programlar**: Arka planda ~10 saniyede bir çalışan işlemler taranır
-  (`psutil`). Ayarlar'da eklediğin bir programın işlemi (ör. `Code.exe`)
-  çalışıyorsa, eşlediğin kategori için zamanlayıcı otomatik başlar.
-- **Siteler**: Tarayıcı eklentisi, takip edilen bir alan adına (ör.
-  `udemy.com`) ait sekme açıkken ~15 saniyede bir uygulamaya haber verir.
-- Program/site sadece minimize edilir ya da arka plana alınırsa (hâlâ
-  çalışıyor/sekme açık) oturum **süresiz** devam eder. Program kapatılır ya
-  da sekme kapanırsa/uzaklaşılırsa **1 dakika** grace süresi sonunda oturum
-  kapanır; bu süre içinde geri gelinirse oturum kesintisiz sürer.
-- Birden fazla kategori aynı anda aktif olabilir (ör. editör + kurs sitesi
-  aynı anda açıksa).
-- Bir otomatik oturumu elle "Durdur" ile kesersen, o kategori 10 dakika
-  boyunca yeniden otomatik başlatılmaz.
-- Uygulama penceresi kapatıldığında tüm açık oturumlar kapatılır.
+Kısa molalar geçmişi onlarca parçaya bölmez; gece yarısını geçen oturumlar
+gün sınırında bölünür (yoksa Pazar gecesi çalışması önceki haftaya yazılırdı).
+Bir program yalnızca **tek bir** kategoriye bağlanabilir — aksi hâlde aynı
+süre iki kez sayılırdı.
 
-## GitHub Entegrasyonu
+## Bilinen sınırlamalar
 
-`config.py` içindeki `GITHUB_KULLANICI` değeri (varsayılan: `Yoursel71`,
-kurulum sihirbazından değiştirilebilir) kullanılarak GitHub'ın herkese açık
-Events API'sinden (`/users/{kullanici}/events/public`) push etkinlikleri
-çekilir. Bu API kimlik doğrulama gerektirmez ancak:
+- **Boşta algılama, tepsi ikonu ve Windows açılışı yalnızca Windows'ta**
+  çalışır. Linux/macOS'ta uygulama çalışır ama kullanıcı hiç boşta sayılmaz.
+- Site takibi tarayıcı eklentisi olmadan çalışmaz.
+- GitHub'ın herkese açık Events API'si yalnızca **son ~90 günü** ve yalnızca
+  herkese açık push etkinliklerini döndürür; saatte 60 istek sınırı vardır
+  (veri 1 saat önbelleklenir). `GITHUB_TOKEN` ortam değişkeniyle sınırı
+  artırabilirsin.
+- Uygulama sabit `57391` portunu kullanır (`GELISIM_TAKIP_PORT` ile
+  değiştirilebilir). İkinci bir örnek açılmaz; veri bozulmasını önlemek için
+  tek örnek kilidi vardır.
 
-- Sadece **son ~90 günlük** etkinliği döner (GitHub'ın kendi sınırlaması).
-- Saatte 60 istek limiti vardır; bu yüzden veri 1 saatliğine önbelleklenir
-  (`data/veri.json` içindeki `github.son_senkron` alanı üzerinden).
-- İstatistikler sayfasındaki "GitHub'ı Yenile" butonu önbelleği aşarak
-  anında yeniden çeker.
+## Proje yapısı
 
-Rate limit'i artırmak isterseniz `GITHUB_TOKEN` ortam değişkenini
-ayarlayabilirsiniz (zorunlu değildir).
-
-## Bildirimler
-
-Haftalık hedef karşılanmadığında, haftanın son 2 gününde (Cumartesi/Pazar)
-günde en fazla 1 kez masaüstü bildirimi gönderilir (`plyer` ile). Bildirim
-API'sinin desteklenmediği ortamlarda (ör. sunucu/konteyner) hata sessizce
-loglanır, uygulama çökmez.
-
-## Modüller
-
-- **Kurulum Sihirbazı**: İlk açılışta hedefler, GitHub kullanıcı adı,
-  izlenecek program(lar) ve site(ler) sorulur; animasyonlu, adım adım.
-- **Zaman Takibi**: Elle Başlat/Durdur ya da otomatik izleme; birden fazla
-  kategori aynı anda aktif olabilir, her biri kendi canlı sayacıyla.
-- **Isı Haritası**: Manuel süreye göre renklendirilmiş grid (haftalık/aylık
-  görünüm), GitHub commit günleri aynı grid üzerinde ikincil işaret olarak
-  gösterilir.
-- **GitHub Entegrasyonu**: Yukarıda açıklandığı gibi.
-- **Hedefler**: Haftalık ve toplam hedef saat belirleme, ilerleme yüzdesi.
-- **İstatistikler**: Ortalama süreler, en çok çalışılan gün, kategori
-  dağılımı, en aktif repo, tempoya göre tahmini bitiş süresi (ETA).
-
-## Bilinen Sınırlamalar
-
-- Otomatik program/site izleme yalnızca Windows'ta anlamlıdır (`psutil`
-  işlem adları Windows'a özgü, ör. `Code.exe`); Linux/Mac'te kaynak koddan
-  çalıştırılabilir ama otomatik izleme farklı işlem adları gerektirir.
-- Site takibi için tarayıcı eklentisinin ayrıca kurulması gerekir.
-- Uygulama sabit `57391` portunu kullanır; bu port başka bir uygulama
-  tarafından kullanılıyorsa çakışma olabilir.
+```
+app.py                  Flask rotaları ve JSON API
+masaustu.py             pywebview + tepsi giriş noktası (.exe)
+config.py               sabitler ve yol yardımcıları
+depo/                   JSON deposu, şema göçü, varsayılanlar
+servisler/              zaman takibi, izleme motoru, istatistik, doğrulama
+platform_katmani/       Windows'a özgü kod (boşta, tepsi, autostart, yollar)
+templates/ static/      arayüz
+tarayici-eklentisi/     Chrome/Edge eklentisi (Manifest V3)
+testler/                pytest paketi
+```

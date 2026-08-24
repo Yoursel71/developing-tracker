@@ -1,0 +1,110 @@
+{% extends "taban.html" %}
+{% block baslik %}Yol Haritası{% endblock %}
+{% block icerik %}
+
+<div class="sayfa-basligi">
+  <div>
+    <h1>Yol Haritası</h1>
+    <p class="alt">Toplam hedefin, tamamlanmamış konuların toplamıdır.</p>
+  </div>
+</div>
+
+<section class="izgara izgara-3">
+  <div class="metrik">
+    <span class="metrik-etiket">İlerleme</span>
+    <span class="metrik-deger">{{ ozet.tamamlanan_sayisi }}<span style="font-size:var(--olcek-md);color:var(--metin-3)"> / {{ ozet.toplam_sayisi }}</span></span>
+    <div class="ilerleme" role="progressbar" aria-valuenow="{{ ozet.yuzde }}" aria-valuemin="0" aria-valuemax="100"
+         aria-label="Yol haritası ilerlemesi">
+      <div class="ilerleme-dolgu" style="width: {{ ozet.yuzde }}%"></div>
+    </div>
+  </div>
+  <div class="metrik">
+    <span class="metrik-etiket">Kalan</span>
+    <span class="metrik-deger">{{ ozet.kalan_saat }}<span style="font-size:var(--olcek-md);color:var(--metin-3)"> saat</span></span>
+    <span class="metrik-alt">Toplam {{ ozet.toplam_saat }} saatlik plan</span>
+  </div>
+  <div class="metrik">
+    <span class="metrik-etiket">Sıradaki</span>
+    {% if ozet.siradaki %}
+      <span class="metrik-deger" style="font-size: var(--olcek-lg)">{{ ozet.siradaki.ad }}</span>
+      <span class="metrik-alt">
+        ~{{ ozet.siradaki.tahmini_saat }} saat
+        {% if ozet.siradaki_tahmini_gun %}· bu tempoda ~{{ ozet.siradaki_tahmini_gun }} gün{% endif %}
+      </span>
+    {% else %}
+      <span class="metrik-deger" style="font-size: var(--olcek-lg)">Tamamlandı 🎉</span>
+    {% endif %}
+  </div>
+</section>
+
+<div class="kart" style="margin-top: var(--bosluk-4)">
+  <div class="kart-basligi">
+    <h2>Konular</h2>
+    <span style="font-size: var(--olcek-xs); color: var(--metin-3)">
+      {% if tempo %}Mevcut tempo: günde ~{{ tempo | round(0) | int }} dk{% endif %}
+    </span>
+  </div>
+
+  {% if yol %}
+    <div class="tablo-sarmal" style="margin-bottom: var(--bosluk-4)">
+      <table>
+        <thead>
+          <tr><th style="width: 44px">Bitti</th><th>Konu</th><th class="sayisal">Tahmini</th><th>Durum</th></tr>
+        </thead>
+        <tbody>
+          {% for tas in yol %}
+            <tr>
+              <td>
+                <form method="post" action="{{ url_for('yol_tas_durumu', tas_id=tas.id) }}" data-ajax>
+                  <input type="hidden" name="tamamlandi" value="{{ '0' if tas.tamamlandi else '1' }}">
+                  <button type="submit" class="btn btn-sade btn-kucuk"
+                          aria-label="{{ tas.ad }} konusunu {{ 'tamamlanmadı' if tas.tamamlandi else 'tamamlandı' }} olarak işaretle">
+                    {{ '☑' if tas.tamamlandi else '☐' }}
+                  </button>
+                </form>
+              </td>
+              <td style="{{ 'color: var(--metin-3); text-decoration: line-through' if tas.tamamlandi }}">{{ tas.ad }}</td>
+              <td class="sayisal">{{ tas.tahmini_saat }} s</td>
+              <td style="color: var(--metin-2); font-size: var(--olcek-xs)">
+                {% if tas.tamamlandi %}{{ tas.tamamlanma_tarihi or 'tamamlandı' }}{% else %}—{% endif %}
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% endif %}
+
+  <details>
+    <summary style="cursor: pointer; font-size: var(--olcek-sm); color: var(--metin-2); margin-bottom: var(--bosluk-3)">
+      Yol haritasını düzenle
+    </summary>
+    <form method="post" action="{{ url_for('yol_haritasi_sayfasi') }}">
+      <div class="satir-grubu" id="tas-satirlari">
+        {% for tas in yol %}
+          <div class="satir site-satir">
+            <input type="hidden" name="tas_id[]" value="{{ tas.id }}">
+            {% if tas.tamamlandi %}<input type="hidden" name="tas_tamamlandi[]" value="{{ tas.id }}">{% endif %}
+            <input type="text" name="tas_ad[]" value="{{ tas.ad }}" aria-label="Konu adı">
+            <input type="number" step="0.5" min="0" name="tas_saat[]" value="{{ tas.tahmini_saat }}" aria-label="Tahmini saat">
+            <button type="button" class="satir-sil" aria-label="{{ tas.ad }} konusunu sil">✕</button>
+          </div>
+        {% endfor %}
+      </div>
+      <template id="tas-satir-sablonu">
+        <div class="satir site-satir">
+          <input type="hidden" name="tas_id[]" value="">
+          <input type="text" name="tas_ad[]" placeholder="Konu adı" aria-label="Konu adı">
+          <input type="number" step="0.5" min="0" name="tas_saat[]" placeholder="Saat" aria-label="Tahmini saat">
+          <button type="button" class="satir-sil" aria-label="Bu konuyu sil">✕</button>
+        </div>
+      </template>
+      <div class="btn-satiri" style="margin-top: var(--bosluk-3)">
+        <button type="button" class="btn" data-satir-ekle="tas">+ Konu ekle</button>
+        <button type="submit" class="btn btn-ana">Kaydet</button>
+      </div>
+    </form>
+  </details>
+</div>
+
+{% endblock %}

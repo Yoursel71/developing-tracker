@@ -1,0 +1,125 @@
+{% extends "taban.html" %}
+{% block baslik %}Geçmiş{% endblock %}
+{% block icerik %}
+
+<div class="sayfa-basligi">
+  <div>
+    <h1>Geçmiş</h1>
+    <p class="alt">{{ toplam }} oturum · yanlış kaydı düzeltebilir veya silebilirsin</p>
+  </div>
+  <div class="btn-satiri">
+    <a href="{{ url_for('disa_aktar_csv') }}" class="btn">CSV indir</a>
+    <button type="button" class="btn btn-ana" data-ac="oturum-ekle">+ Elle oturum ekle</button>
+  </div>
+</div>
+
+<div class="kart" id="oturum-ekle" hidden>
+  <div class="kart-basligi"><h2>Elle oturum ekle</h2></div>
+  <form method="post" action="{{ url_for('oturum_ekle') }}">
+    <div class="alan-satiri">
+      <div class="alan">
+        <label for="ekle-tarih">Tarih</label>
+        <input type="date" id="ekle-tarih" name="tarih" required>
+      </div>
+      <div class="alan">
+        <label for="ekle-kategori">Kategori</label>
+        <select id="ekle-kategori" name="kategori">
+          {% for k in kategoriler %}<option value="{{ k }}">{{ k }}</option>{% endfor %}
+        </select>
+      </div>
+      <div class="alan">
+        <label for="ekle-sure">Süre (dakika)</label>
+        <input type="number" id="ekle-sure" name="sure_dakika" min="1" step="1" required>
+      </div>
+    </div>
+    <div class="alan">
+      <label for="ekle-not">Not <span class="aciklama">Bugün ne öğrendin?</span></label>
+      <input type="text" id="ekle-not" name="not" maxlength="500" placeholder="örn. while döngüleri, range()">
+    </div>
+    <div class="btn-satiri">
+      <button type="submit" class="btn btn-ana">Ekle</button>
+      <button type="button" class="btn btn-sade" data-kapat="oturum-ekle">Vazgeç</button>
+    </div>
+  </form>
+</div>
+
+<div class="kart">
+  {% if oturumlar %}
+    <div class="tablo-sarmal">
+      <table>
+        <thead>
+          <tr>
+            <th>Tarih</th><th>Saat</th><th>Kategori</th>
+            <th class="sayisal">Süre</th><th>Not</th><th></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for o in oturumlar %}
+            <tr data-oturum="{{ o.id }}">
+              <td>{{ o.tarih }}</td>
+              <td style="color: var(--metin-3); font-size: var(--olcek-xs)">
+                {% if o.baslangic %}{{ o.baslangic[:5] }}–{{ o.bitis[:5] }}{% else %}—{% endif %}
+              </td>
+              <td>
+                {{ o.kategori }}
+                {% if o.kaynak == 'otomatik' %}<span class="rozet rozet-otomatik">oto</span>{% endif %}
+                {% if o.duzenlendi %}<span class="rozet rozet-duzenlendi">düzenlendi</span>{% endif %}
+              </td>
+              <td class="sayisal">{{ o.sure_dakika }} dk</td>
+              <td style="color: var(--metin-2)">{{ o['not'] or '—' }}</td>
+              <td>
+                <div class="btn-satiri">
+                  <button type="button" class="btn btn-sade btn-kucuk" data-duzenle="{{ o.id }}"
+                          aria-label="{{ o.tarih }} oturumunu düzenle">Düzenle</button>
+                  <form method="post" action="{{ url_for('oturum_sil', oturum_id=o.id) }}"
+                        data-ajax data-onay="Bu oturumu silmek istediğine emin misin?">
+                    <button type="submit" class="btn btn-tehlike btn-kucuk"
+                            aria-label="{{ o.tarih }} oturumunu sil">Sil</button>
+                  </form>
+                </div>
+              </td>
+            </tr>
+            <tr class="duzenle-satiri" id="duzenle-{{ o.id }}" hidden>
+              <td colspan="6">
+                <form method="post" action="{{ url_for('oturum_guncelle', oturum_id=o.id) }}">
+                  <div class="alan-satiri">
+                    <div class="alan">
+                      <label>Tarih<input type="date" name="tarih" value="{{ o.tarih }}"></label>
+                    </div>
+                    <div class="alan">
+                      <label>Kategori
+                        <select name="kategori">
+                          {% for k in kategoriler %}
+                            <option value="{{ k }}" {{ 'selected' if k == o.kategori }}>{{ k }}</option>
+                          {% endfor %}
+                        </select>
+                      </label>
+                    </div>
+                    <div class="alan">
+                      <label>Süre (dk)<input type="number" name="sure_dakika" min="0" step="0.5" value="{{ o.sure_dakika }}"></label>
+                    </div>
+                  </div>
+                  <div class="alan">
+                    <label>Not<input type="text" name="not" maxlength="500" value="{{ o['not'] or '' }}"></label>
+                  </div>
+                  <div class="btn-satiri">
+                    <button type="submit" class="btn btn-ana btn-kucuk">Kaydet</button>
+                    <button type="button" class="btn btn-sade btn-kucuk" data-duzenle-kapat="{{ o.id }}">Vazgeç</button>
+                  </div>
+                </form>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <div class="bos-durum">
+      <h3>Geçmiş boş</h3>
+      <p>Kaydedilmiş oturumların burada listelenecek.</p>
+      <a href="{{ url_for('panel') }}" class="btn btn-ana">Panele dön</a>
+    </div>
+  {% endif %}
+</div>
+
+{% endblock %}

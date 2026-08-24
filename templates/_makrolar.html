@@ -1,0 +1,110 @@
+{# Şablonlar arasında paylaşılan parçalar #}
+
+{% macro heatmap_hucre(gun, indeks=0) %}
+  {%- if gun is none -%}
+    <div class="ay-hucre bos" aria-hidden="true"></div>
+  {%- else -%}
+    <button type="button"
+            class="ay-hucre seviye-{{ gun.seviye }} {{ 'commit-var' if gun.commit_sayisi else '' }}"
+            style="--gecikme: {{ indeks }};"
+            aria-label="{{ gun.tarih }}: {{ gun.saat_metni }}{% if gun.commit_sayisi %}, {{ gun.commit_sayisi }} commit{% endif %}"
+            title="{{ gun.tarih }} — {{ gun.saat_metni }}{% if gun.commit_sayisi %} · {{ gun.commit_sayisi }} commit{% endif %}">
+      {{ gun.gun }}
+    </button>
+  {%- endif -%}
+{% endmacro %}
+
+{% macro yil_heatmap(grid, baslik_goster=true) %}
+<div class="heatmap-sarmal">
+  <div class="heatmap">
+    <div class="heatmap-aylar" aria-hidden="true">
+      {% for etiket in grid.ay_etiketleri %}
+        <span style="left: {{ etiket.hafta * 14 }}px;">{{ etiket.etiket }}</span>
+      {% endfor %}
+    </div>
+    <div class="heatmap-govde">
+      <div class="heatmap-gunler" aria-hidden="true">
+        {% for gun in grid.gun_etiketleri %}
+          <span>{{ gun if loop.index0 in [0, 2, 4] else '' }}</span>
+        {% endfor %}
+      </div>
+      <div class="heatmap-haftalar" role="grid" aria-label="Günlük çalışma ısı haritası">
+        {% for hafta in grid.haftalar %}
+          <div class="heatmap-hafta" role="row">
+            {% for gun in hafta %}
+              <button type="button" role="gridcell"
+                      class="heatmap-hucre seviye-{{ gun.seviye }} {{ 'commit-var' if gun.commit_sayisi else '' }} {{ 'bos-gelecek' if gun.gelecek else '' }}"
+                      style="--gecikme: {{ loop.index0 + loop.index * 0 }};"
+                      {% if gun.gelecek %}disabled aria-hidden="true" tabindex="-1"{% endif %}
+                      aria-label="{{ gun.tarih }}: {{ gun.saat_metni }}{% if gun.commit_sayisi %}, {{ gun.commit_sayisi }} commit{% endif %}"
+                      title="{{ gun.tarih }} — {{ gun.saat_metni }}{% if gun.commit_sayisi %} · {{ gun.commit_sayisi }} commit{% endif %}"></button>
+            {% endfor %}
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</div>
+{% if baslik_goster %}
+<div class="heatmap-alt">
+  <span>{{ grid.aktif_gun_sayisi }} günde toplam {{ grid.toplam_metni }}</span>
+  <span class="legend">
+    Az
+    <span class="kutu"></span>
+    <span class="kutu" style="background: var(--yesil-1)"></span>
+    <span class="kutu" style="background: var(--yesil-2)"></span>
+    <span class="kutu" style="background: var(--yesil-3)"></span>
+    <span class="kutu" style="background: var(--yesil-4)"></span>
+    Çok
+  </span>
+</div>
+{% endif %}
+{% endmacro %}
+
+{% macro editor_satirlari(izleme, kategoriler) %}
+<div class="satir-grubu" id="editor-satirlari">
+  {% for e in izleme.editorler %}
+  <div class="satir">
+    <input type="text" name="editor_program_adi[]" placeholder="Program adı" value="{{ e.program_adi }}" aria-label="Program adı">
+    <input type="text" name="editor_islem_adi[]" placeholder="İşlem adı (Code.exe)" value="{{ e.islem_adi }}" aria-label="İşlem adı">
+    <select name="editor_kategori[]" aria-label="Kategori">
+      {% for k in kategoriler %}<option value="{{ k }}" {{ 'selected' if k == e.kategori }}>{{ k }}</option>{% endfor %}
+    </select>
+    <button type="button" class="satir-sil" aria-label="Bu programı listeden çıkar">✕</button>
+  </div>
+  {% endfor %}
+</div>
+<template id="editor-satir-sablonu">
+  <div class="satir">
+    <input type="text" name="editor_program_adi[]" placeholder="Program adı" aria-label="Program adı">
+    <input type="text" name="editor_islem_adi[]" placeholder="İşlem adı (Code.exe)" aria-label="İşlem adı">
+    <select name="editor_kategori[]" aria-label="Kategori">
+      {% for k in kategoriler %}<option value="{{ k }}">{{ k }}</option>{% endfor %}
+    </select>
+    <button type="button" class="satir-sil" aria-label="Bu programı listeden çıkar">✕</button>
+  </div>
+</template>
+{% endmacro %}
+
+{% macro site_satirlari(izleme, kategoriler) %}
+<div class="satir-grubu" id="site-satirlari">
+  {% for s in izleme.siteler %}
+  <div class="satir site-satir">
+    <input type="text" name="site_alan_adi[]" placeholder="udemy.com" value="{{ s.alan_adi }}" aria-label="Alan adı">
+    <select name="site_kategori[]" aria-label="Kategori">
+      {% for k in kategoriler %}<option value="{{ k }}" {{ 'selected' if k == s.kategori }}>{{ k }}</option>{% endfor %}
+    </select>
+    <button type="button" class="satir-sil" aria-label="Bu siteyi listeden çıkar">✕</button>
+  </div>
+  {% endfor %}
+</div>
+<template id="site-satir-sablonu">
+  <div class="satir site-satir">
+    <input type="text" name="site_alan_adi[]" placeholder="udemy.com" aria-label="Alan adı">
+    <select name="site_kategori[]" aria-label="Kategori">
+      {% for k in kategoriler %}<option value="{{ k }}">{{ k }}</option>{% endfor %}
+    </select>
+    <button type="button" class="satir-sil" aria-label="Bu siteyi listeden çıkar">✕</button>
+  </div>
+</template>
+{% endmacro %}

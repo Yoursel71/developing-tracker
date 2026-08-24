@@ -1,20 +1,76 @@
 {% extends "taban.html" %}
 {% block baslik %}Hedefler{% endblock %}
 {% block icerik %}
-<h1>Hedefler</h1>
 
-<p>Bu hafta: {{ haftalik_saat_bugune_kadar }} / {{ hedef.haftalik_saat }} saat ({{ ilerleme_yuzde }}%)</p>
-<div class="ilerleme-cubugu">
-  <div class="ilerleme-dolgu" style="width: {{ ilerleme_yuzde }}%;"></div>
+<div class="sayfa-basligi">
+  <div>
+    <h1>Hedefler</h1>
+    <p class="alt">Haftalık tempon ve toplam hedefin.</p>
+  </div>
 </div>
 
-<form method="post" action="{{ url_for('hedefler_sayfasi') }}">
-  <label>Haftalık hedef (saat)
-    <input type="number" step="0.5" min="0" name="haftalik_saat" value="{{ hedef.haftalik_saat }}">
-  </label>
-  <label>Toplam hedef (saat)
-    <input type="number" step="1" min="0" name="toplam_hedef_saat" value="{{ hedef.toplam_hedef_saat }}">
-  </label>
-  <button type="submit">Kaydet</button>
-</form>
+<div class="izgara izgara-2">
+  <div class="kart">
+    <div class="kart-basligi"><h2>Bu hafta</h2></div>
+    <p class="metrik-deger">{{ haftalik.saat }}<span style="font-size:var(--olcek-md);color:var(--metin-3)"> / {{ haftalik.hedef_saat }} saat</span></p>
+    <div class="ilerleme {{ 'asildi' if haftalik.asildi }}" role="progressbar"
+         aria-valuenow="{{ haftalik.yuzde }}" aria-valuemin="0" aria-valuemax="100"
+         aria-label="Haftalık hedef ilerlemesi" style="margin: var(--bosluk-3) 0">
+      <div class="ilerleme-dolgu" style="width: {{ haftalik.cubuk_yuzde }}%"></div>
+    </div>
+    <p style="font-size: var(--olcek-sm); color: var(--metin-2)">
+      {% if haftalik.asildi %}
+        Hedefini %{{ haftalik.yuzde | round(0) | int }} ile aştın — {{ (haftalik.saat - haftalik.hedef_saat) | round(1) }} saat fazladan.
+      {% else %}
+        %{{ haftalik.yuzde | round(0) | int }} tamamlandı · {{ haftalik.kalan_saat }} saat kaldı ·
+        {{ haftalik.kalan_gun }} gün var
+      {% endif %}
+    </p>
+  </div>
+
+  <div class="kart">
+    <div class="kart-basligi"><h2>Toplam hedef</h2></div>
+    <p class="metrik-deger">{{ tahmin.toplam_saat }}<span style="font-size:var(--olcek-md);color:var(--metin-3)"> / {{ tahmin.hedef_saat }} saat</span></p>
+    <div class="ilerleme" role="progressbar" aria-valuenow="{{ tahmin.yuzde }}" aria-valuemin="0" aria-valuemax="100"
+         aria-label="Toplam hedef ilerlemesi" style="margin: var(--bosluk-3) 0">
+      <div class="ilerleme-dolgu" style="width: {{ tahmin.yuzde }}%"></div>
+    </div>
+    <p style="font-size: var(--olcek-sm); color: var(--metin-2)">
+      {% if tahmin.tamamlandi %}Hedefe ulaştın! 🎉
+      {% elif tahmin.hafta %}Mevcut tempoyla ~{{ tahmin.hafta }} hafta
+      {% else %}{{ tahmin.mesaj }}{% endif %}
+    </p>
+  </div>
+</div>
+
+{% if ozet_var is not defined and yol_ozeti.toplam_sayisi %}
+  <div class="uyari-seridi" role="status" style="margin-top: var(--bosluk-4)">
+    Toplam hedefin yol haritandaki {{ yol_ozeti.toplam_sayisi }} konunun toplamından hesaplanıyor.
+    Değiştirmek için <a href="{{ url_for('yol_haritasi_sayfasi') }}">Yol Haritası</a> sayfasını kullan.
+  </div>
+{% endif %}
+
+<div class="kart" style="margin-top: var(--bosluk-4)">
+  <div class="kart-basligi"><h2>Hedefleri düzenle</h2></div>
+  <form method="post" action="{{ url_for('hedefler_sayfasi') }}">
+    <div class="alan-satiri">
+      <div class="alan">
+        <label for="haftalik">Haftalık hedef (saat)
+          <span class="aciklama">Bu hafta kaç saat ayırmak istiyorsun?</span>
+        </label>
+        <input type="number" id="haftalik" name="haftalik_saat" step="0.5" min="0" max="168"
+               value="{{ hedef.haftalik_saat }}">
+      </div>
+      <div class="alan">
+        <label for="toplam">Toplam hedef (saat)
+          <span class="aciklama">Yol haritası varsa oradan hesaplanır.</span>
+        </label>
+        <input type="number" id="toplam" name="toplam_hedef_saat" step="1" min="0"
+               value="{{ hedef.toplam_hedef_saat }}">
+      </div>
+    </div>
+    <button type="submit" class="btn btn-ana">Kaydet</button>
+  </form>
+</div>
+
 {% endblock %}

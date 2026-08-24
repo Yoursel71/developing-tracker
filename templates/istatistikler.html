@@ -1,61 +1,182 @@
 {% extends "taban.html" %}
 {% block baslik %}İstatistikler{% endblock %}
 {% block icerik %}
-<h1>İstatistikler</h1>
+
+<div class="sayfa-basligi">
+  <div>
+    <h1>İstatistikler</h1>
+    <p class="alt">{{ istatistik.oturum_sayisi }} oturum · {{ istatistik.aktif_gun_sayisi }} aktif gün</p>
+  </div>
+  <form method="post" action="{{ url_for('github_yenile') }}" data-ajax>
+    <button type="submit" class="btn">GitHub'ı yenile</button>
+  </form>
+</div>
 
 {% if github_hatasi %}
-  <p class="uyari">GitHub verisi güncellenemedi: {{ github_hatasi }} (önbellekteki veri gösteriliyor)</p>
+  <div class="uyari-seridi" role="status">{{ github_hatasi }}</div>
 {% endif %}
 
-<div class="kart-grid">
+{% if not istatistik.veri_var %}
   <div class="kart">
-    <h3>Ortalama Süre</h3>
-    <p>Tüm zamanlar: {{ istatistik.ortalama_tum_zamanlar }} dk/gün</p>
-    <p>Son 7 gün: {{ istatistik.ortalama_son_7_gun }} dk/gün</p>
-    <p>Son 30 gün: {{ istatistik.ortalama_son_30_gun }} dk/gün</p>
+    <div class="bos-durum">
+      <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+        <path d="M4 20V10M10 20V4M16 20v-7M22 20H2" stroke-linecap="round"/>
+      </svg>
+      <h3>İstatistik için henüz veri yok</h3>
+      <p>Birkaç oturum kaydettikten sonra burada ortalamalarını, en verimli
+         günlerini ve tahmini bitiş süreni göreceksin.</p>
+      <a href="{{ url_for('panel') }}" class="btn btn-ana">Panele dön</a>
+    </div>
+  </div>
+{% else %}
+
+<section class="izgara izgara-4">
+  <div class="metrik">
+    <span class="metrik-etiket">Toplam</span>
+    <span class="metrik-deger">{{ istatistik.toplam_saat }}<span style="font-size:var(--olcek-md);color:var(--metin-3)"> saat</span></span>
+  </div>
+  <div class="metrik">
+    <span class="metrik-etiket">Son 7 gün ort.</span>
+    <span class="metrik-deger">{{ istatistik.ortalama_son_7_gun | round(0) | int }}<span style="font-size:var(--olcek-md);color:var(--metin-3)"> dk/gün</span></span>
+  </div>
+  <div class="metrik">
+    <span class="metrik-etiket">Son 30 gün ort.</span>
+    <span class="metrik-deger">{{ istatistik.ortalama_son_30_gun | round(0) | int }}<span style="font-size:var(--olcek-md);color:var(--metin-3)"> dk/gün</span></span>
+  </div>
+  <div class="metrik">
+    <span class="metrik-etiket">Çalışılan gün ort.</span>
+    <span class="metrik-deger">{{ istatistik.calisilan_gun_ortalamasi | round(0) | int }}<span style="font-size:var(--olcek-md);color:var(--metin-3)"> dk</span></span>
+    <span class="metrik-alt">Sadece çalıştığın günler</span>
+  </div>
+</section>
+
+<div class="kart" style="margin-top: var(--bosluk-4)">
+  <div class="kart-basligi"><h2>Tahmini bitiş</h2></div>
+  {% set t = istatistik.tahmin %}
+  <div class="ilerleme" role="progressbar" aria-valuenow="{{ t.yuzde }}" aria-valuemin="0" aria-valuemax="100"
+       aria-label="Toplam hedef ilerlemesi" style="margin-bottom: var(--bosluk-3)">
+    <div class="ilerleme-dolgu" style="width: {{ t.yuzde }}%"></div>
+  </div>
+  <p style="margin-bottom: var(--bosluk-3); color: var(--metin-2); font-size: var(--olcek-sm)">
+    {{ t.toplam_saat }} / {{ t.hedef_saat }} saat (%{{ t.yuzde | round(0) | int }})
+  </p>
+
+  {% if t.tamamlandi %}
+    <p><strong>Hedefe ulaştın! 🎉</strong></p>
+  {% elif t.durum != 'tamam' %}
+    <p style="color: var(--metin-2)">{{ t.mesaj }}</p>
+    {% if t.hedef_temposuyla_hafta %}
+      <p style="margin-top: var(--bosluk-2)">
+        Haftalık hedefine sadık kalırsan: <strong>~{{ t.hedef_temposuyla_hafta }} hafta</strong>
+      </p>
+    {% endif %}
+  {% else %}
+    <div class="izgara izgara-2">
+      <div>
+        <span class="metrik-etiket">Mevcut tempoyla</span>
+        <p style="font-size: var(--olcek-xl); font-weight: 650; font-variant-numeric: tabular-nums">
+          ~{{ t.hafta }} hafta
+        </p>
+        <p style="font-size: var(--olcek-xs); color: var(--metin-2)">
+          Günde ~{{ t.tempo_dakika | round(0) | int }} dk tempoyla
+          {% if t.iyimser_hafta and t.kotumser_hafta %}
+            · aralık {{ t.iyimser_hafta }}–{{ t.kotumser_hafta }} hafta
+          {% endif %}
+          {% if t.tahmini_tarih %}<br>Tahmini tarih: {{ t.tahmini_tarih }}{% endif %}
+        </p>
+      </div>
+      {% if t.hedef_temposuyla_hafta %}
+      <div>
+        <span class="metrik-etiket">Haftalık hedefine uyarsan</span>
+        <p style="font-size: var(--olcek-xl); font-weight: 650; font-variant-numeric: tabular-nums">
+          ~{{ t.hedef_temposuyla_hafta }} hafta
+        </p>
+        <p style="font-size: var(--olcek-xs); color: var(--metin-2)">Kalan {{ t.kalan_saat }} saat</p>
+      </div>
+      {% endif %}
+    </div>
+  {% endif %}
+</div>
+
+<div class="izgara izgara-2" style="margin-top: var(--bosluk-4)">
+  <div class="kart">
+    <div class="kart-basligi"><h2>Son 30 gün</h2></div>
+    <div id="trend-grafik" data-veri='{{ istatistik.gunluk_trend | tojson }}'></div>
   </div>
 
   <div class="kart">
-    <h3>En Çok Çalışılan Gün</h3>
-    {% if istatistik.en_cok_calisilan_gun %}
-      <p>{{ istatistik.en_cok_calisilan_gun.tarih }} — {{ istatistik.en_cok_calisilan_gun.dakika }} dk</p>
-    {% else %}
-      <p>Henüz veri yok.</p>
+    <div class="kart-basligi"><h2>Kategori dağılımı</h2></div>
+    {% set toplam_dk = istatistik.kategori_dagilimi | sum(attribute='dakika') %}
+    {% for k in istatistik.kategori_dagilimi %}
+      <div class="dagilim-satiri">
+        <span class="dagilim-ad">{{ k.kategori }}</span>
+        <div class="dagilim-cubuk">
+          <div class="dagilim-dolgu" style="width: {{ k.yuzde }}%; background: var(--yesil-{{ (loop.index0 % 4) + 1 }})"></div>
+        </div>
+        <span class="dagilim-deger">{{ (k.dakika / 60) | round(1) }} s · %{{ k.yuzde | round(0) | int }}</span>
+      </div>
+    {% endfor %}
+  </div>
+</div>
+
+<div class="izgara izgara-2">
+  <div class="kart">
+    <div class="kart-basligi"><h2>Haftanın günleri</h2></div>
+    <div id="gun-grafik" data-veri='{{ istatistik.haftanin_gunleri | tojson }}'></div>
+    {% set en_iyi = istatistik.haftanin_gunleri | sort(attribute='dakika', reverse=true) | first %}
+    {% if en_iyi and en_iyi.dakika > 0 %}
+      <p style="font-size: var(--olcek-sm); color: var(--metin-2); margin-top: var(--bosluk-3)">
+        En verimli günün <strong>{{ en_iyi.gun }}</strong> — toplam {{ (en_iyi.dakika / 60) | round(1) }} saat.
+      </p>
     {% endif %}
   </div>
 
   <div class="kart">
-    <h3>Kategori Dağılımı</h3>
-    <ul>
-      {% for kategori, dakika in istatistik.kategori_dagilimi.items() %}
-        <li>{{ kategori }}: {{ dakika }} dk</li>
-      {% else %}
-        <li>Henüz veri yok.</li>
-      {% endfor %}
-    </ul>
-  </div>
-
-  <div class="kart">
-    <h3>En Aktif Repo</h3>
-    {% if istatistik.en_aktif_repo %}
-      <p>{{ istatistik.en_aktif_repo.repo }} — {{ istatistik.en_aktif_repo.commit_sayisi }} commit</p>
-    {% else %}
-      <p>GitHub verisi yok.</p>
-    {% endif %}
-    <form method="post" action="{{ url_for('github_yenile') }}">
-      <button type="submit">GitHub'ı Yenile</button>
-    </form>
-  </div>
-
-  <div class="kart">
-    <h3>Tahmini Bitiş</h3>
-    {% if istatistik.eta.tamamlandi %}
-      <p>Hedefe ulaşıldı!</p>
-    {% elif istatistik.eta.tahmini_hafta is none %}
-      <p>Tahmin için yeterli veri yok.</p>
-    {% else %}
-      <p>Bu tempoyle gidersen, hedefi yaklaşık <strong>{{ istatistik.eta.tahmini_hafta }} hafta</strong> sonra bitirirsin. (Kalan: {{ istatistik.eta.kalan_saat }} saat)</p>
+    <div class="kart-basligi"><h2>Gün içi dağılım</h2></div>
+    <div id="saat-grafik" data-veri='{{ istatistik.saat_dagilimi | tojson }}'></div>
+    {% set en_iyi_saat = istatistik.saat_dagilimi | sort(attribute='dakika', reverse=true) | first %}
+    {% if en_iyi_saat and en_iyi_saat.dakika > 0 %}
+      <p style="font-size: var(--olcek-sm); color: var(--metin-2); margin-top: var(--bosluk-3)">
+        En çok <strong>{{ '%02d'|format(en_iyi_saat.saat) }}:00–{{ '%02d'|format((en_iyi_saat.saat + 1) % 24) }}:00</strong>
+        arasında çalışıyorsun.
+      </p>
     {% endif %}
   </div>
 </div>
+
+<div class="izgara izgara-2">
+  <div class="kart">
+    <div class="kart-basligi"><h2>Rekor gün</h2></div>
+    {% if istatistik.en_cok_calisilan_gun %}
+      <p class="metrik-deger">{{ (istatistik.en_cok_calisilan_gun.dakika / 60) | round(1) }} saat</p>
+      <p style="color: var(--metin-2); font-size: var(--olcek-sm)">{{ istatistik.en_cok_calisilan_gun.tarih }}</p>
+    {% else %}
+      <p style="color: var(--metin-2)">Henüz veri yok.</p>
+    {% endif %}
+  </div>
+
+  <div class="kart">
+    <div class="kart-basligi"><h2>GitHub</h2></div>
+    {% if repolar %}
+      {% for r in repolar %}
+        <div class="dagilim-satiri">
+          <span class="dagilim-ad" style="width: auto; flex: 1">{{ r.repo }}</span>
+          <span class="dagilim-deger">{{ r.commit_sayisi }} commit</span>
+        </div>
+      {% endfor %}
+      <p style="font-size: var(--olcek-xs); color: var(--metin-3); margin-top: var(--bosluk-3)">
+        GitHub yalnızca son ~90 günün herkese açık etkinliğini döndürür.
+      </p>
+    {% elif not github_kullanici %}
+      <p style="color: var(--metin-2); font-size: var(--olcek-sm)">
+        GitHub kullanıcı adı tanımlı değil.
+        <a href="{{ url_for('ayarlar_sayfasi') }}">Ayarlar'dan ekleyebilirsin.</a>
+      </p>
+    {% else %}
+      <p style="color: var(--metin-2); font-size: var(--olcek-sm)">Henüz commit verisi çekilmedi.</p>
+    {% endif %}
+  </div>
+</div>
+
+{% endif %}
 {% endblock %}

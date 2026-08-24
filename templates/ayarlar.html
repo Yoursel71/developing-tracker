@@ -1,79 +1,175 @@
 {% extends "taban.html" %}
+{% from "_makrolar.html" import editor_satirlari, site_satirlari %}
 {% block baslik %}Ayarlar{% endblock %}
 {% block icerik %}
-<h1>Ayarlar</h1>
 
-<form method="post" action="{{ url_for('ayarlar_sayfasi') }}">
-  <h2>Hedefler</h2>
-  <label>Haftalık hedef (saat)
-    <input type="number" step="0.5" min="0" name="haftalik_saat" value="{{ hedef.haftalik_saat }}">
-  </label>
-  <label>Toplam hedef (saat)
-    <input type="number" step="1" min="0" name="toplam_hedef_saat" value="{{ hedef.toplam_hedef_saat }}">
-  </label>
-
-  <h2>GitHub Kullanıcı Adı</h2>
-  <label>GitHub kullanıcı adı
-    <input type="text" name="github_kullanici" value="{{ github_kullanici }}">
-  </label>
-
-  <h2>Kod Yazdığın Program(lar)</h2>
-  <div class="bilinen-editorler">
-    {% for ad, islem in bilinen_editorler.items() %}
-      <button type="button" class="hizli-editor-btn" data-program-adi="{{ ad }}" data-islem-adi="{{ islem }}">+ {{ ad }}</button>
-    {% endfor %}
-    <button type="button" class="hizli-editor-btn" data-program-adi="" data-islem-adi="">+ Diğer</button>
+<div class="sayfa-basligi">
+  <div>
+    <h1>Ayarlar</h1>
+    <p class="alt">Otomatik takip, tercihler ve verin.</p>
   </div>
-  <div class="satir-grubu" id="editor-satirlari">
-    {% for e in izleme.editorler %}
-    <div class="satir">
-      <input type="text" name="editor_program_adi[]" placeholder="Program adı" value="{{ e.program_adi }}">
-      <input type="text" name="editor_islem_adi[]" placeholder="İşlem adı (ör. Code.exe)" value="{{ e.islem_adi }}">
-      <select name="editor_kategori[]">
-        {% for k in kategoriler %}<option value="{{ k }}" {{ 'selected' if k == e.kategori else '' }}>{{ k }}</option>{% endfor %}
-      </select>
-      <button type="button" class="satir-sil">✕</button>
+</div>
+
+<div class="kart">
+  <div class="kart-basligi"><h2>Otomatik takip</h2></div>
+  <form method="post" action="{{ url_for('ayarlar_sayfasi') }}">
+    <input type="hidden" name="bolum" value="izleme">
+
+    <div class="alan">
+      <label for="gh">GitHub kullanıcı adı
+        <span class="aciklama">Commit geçmişin ısı haritasına ikinci katman olarak eklenir.</span>
+      </label>
+      <input type="text" id="gh" name="github_kullanici" value="{{ github_kullanici }}" placeholder="kullaniciadi">
     </div>
-    {% endfor %}
+
+    <h3 style="margin-top: var(--bosluk-5); margin-bottom: var(--bosluk-2)">Kod yazdığın programlar</h3>
+    <p style="font-size: var(--olcek-xs); color: var(--metin-3); margin-bottom: var(--bosluk-3)">
+      Program açıkken zamanlayıcı otomatik çalışır. Bir program yalnızca tek bir
+      kategoriye bağlanabilir — aksi hâlde süre çift sayılır.
+    </p>
+    <div class="cip-satiri">
+      {% for ad, islem in bilinen_editorler.items() %}
+        <button type="button" class="cip" data-editor-ekle data-program="{{ ad }}" data-islem="{{ islem }}">+ {{ ad }}</button>
+      {% endfor %}
+      <button type="button" class="cip" data-editor-ekle data-program="" data-islem="">+ Diğer</button>
+    </div>
+    {{ editor_satirlari(izleme, kategoriler) }}
+
+    <h3 style="margin-top: var(--bosluk-5); margin-bottom: var(--bosluk-2)">Kurs siteleri</h3>
+    <p style="font-size: var(--olcek-xs); color: var(--metin-3); margin-bottom: var(--bosluk-3)">
+      Bunun çalışması için tarayıcı eklentisinin kurulu olması gerekir (aşağıda).
+    </p>
+    <div class="cip-satiri">
+      {% for ad, alan in bilinen_siteler.items() %}
+        <button type="button" class="cip" data-site-ekle data-alan="{{ alan }}">+ {{ ad }}</button>
+      {% endfor %}
+      <button type="button" class="cip" data-site-ekle data-alan="">+ Diğer</button>
+    </div>
+    {{ site_satirlari(izleme, kategoriler) }}
+
+    <button type="submit" class="btn btn-ana" style="margin-top: var(--bosluk-4)">Kaydet</button>
+  </form>
+</div>
+
+<div class="kart">
+  <div class="kart-basligi"><h2>Tercihler</h2></div>
+  <form method="post" action="{{ url_for('ayarlar_sayfasi') }}">
+    <input type="hidden" name="bolum" value="tercihler">
+
+    <div class="alan-satiri">
+      <div class="alan">
+        <label for="tema">Tema</label>
+        <select id="tema" name="tema">
+          <option value="koyu" {{ 'selected' if ayarlar.tema == 'koyu' }}>Koyu</option>
+          <option value="acik" {{ 'selected' if ayarlar.tema == 'acik' }}>Açık</option>
+        </select>
+      </div>
+
+      <div class="alan">
+        <label for="bosta">Boşta kalma eşiği (dakika)
+          <span class="aciklama">
+            {% if bosta_destekleniyor %}
+              Bu süre boyunca klavye/fare hareketi olmazsa sayaç duraklar.
+            {% else %}
+              Bu özellik yalnızca Windows'ta çalışır; bu sistemde devre dışı.
+            {% endif %}
+          </span>
+        </label>
+        <input type="number" id="bosta" name="bosta_esigi_dakika" min="0" max="240" step="1"
+               value="{{ ayarlar.bosta_esigi_dakika }}">
+      </div>
+
+      <div class="alan">
+        <label for="seri">Seri eşiği (dakika)
+          <span class="aciklama">Bir günün "çalışıldı" sayılması için gereken en az süre.</span>
+        </label>
+        <input type="number" id="seri" name="seri_esigi_dakika" min="1" max="600" step="1"
+               value="{{ ayarlar.seri_esigi_dakika }}">
+      </div>
+    </div>
+
+    <div class="alan">
+      <label class="onay">
+        <input type="checkbox" name="tepsiye_indir" value="1" {{ 'checked' if ayarlar.tepsiye_indir }}>
+        <span>Pencereyi kapatınca sistem tepsisine in
+          <span class="aciklama">Takip arka planda sürer; tepsi menüsünden tamamen çıkabilirsin.</span>
+        </span>
+      </label>
+    </div>
+
+    <div class="alan">
+      <label class="onay">
+        <input type="checkbox" name="windows_ile_baslat" value="1" {{ 'checked' if ayarlar.windows_ile_baslat }}>
+        <span>Windows açılışında otomatik başlat</span>
+      </label>
+    </div>
+
+    <div class="alan">
+      <label class="onay">
+        <input type="checkbox" name="bildirimler_acik" value="1" {{ 'checked' if ayarlar.bildirimler_acik }}>
+        <span>Hatırlatma bildirimleri gönder
+          <span class="aciklama">Hafta ortası ilerleme, seri riski ve hafta sonu hedef uyarısı.</span>
+        </span>
+      </label>
+    </div>
+
+    <button type="submit" class="btn btn-ana">Kaydet</button>
+  </form>
+</div>
+
+<div class="kart">
+  <div class="kart-basligi"><h2>Tarayıcı eklentisi</h2></div>
+  <p style="font-size: var(--olcek-sm); color: var(--metin-2); margin-bottom: var(--bosluk-3)">
+    Kurs sitesi takibi için eklentiyi kur ve aşağıdaki anahtarı yapıştır.
+    Bu anahtar, yalnızca senin eklentinin uygulamaya veri gönderebilmesini sağlar.
+  </p>
+  <div class="btn-satiri" style="margin-bottom: var(--bosluk-3)">
+    <code class="kod" id="api-anahtari">{{ api_anahtari }}</code>
+    <button type="button" class="btn btn-kucuk" data-kopyala="api-anahtari">Kopyala</button>
+    <form method="post" action="{{ url_for('api_anahtari_yenile') }}"
+          data-ajax data-onay="Yeni anahtar üretilirse eklentiye tekrar yapıştırman gerekir. Devam?">
+      <button type="submit" class="btn btn-kucuk">Yenile</button>
+    </form>
   </div>
-  <template id="editor-satir-sablonu">
-    <div class="satir">
-      <input type="text" name="editor_program_adi[]" placeholder="Program adı">
-      <input type="text" name="editor_islem_adi[]" placeholder="İşlem adı (ör. Code.exe)">
-      <select name="editor_kategori[]">
-        {% for k in kategoriler %}<option value="{{ k }}">{{ k }}</option>{% endfor %}
-      </select>
-      <button type="button" class="satir-sil">✕</button>
-    </div>
-  </template>
+  <p style="font-size: var(--olcek-xs); color: var(--metin-3)">
+    Kurulum adımları: <code class="kod">tarayici-eklentisi/README.md</code>
+  </p>
+</div>
 
-  <h2>Kurs Aldığın Site(ler)</h2>
-  <p class="ipucu">Bunun çalışması için tarayıcı eklentisinin kurulu olması
-  gerekir (<code>tarayici-eklentisi/README.md</code>).</p>
-  <div class="satir-grubu" id="site-satirlari">
-    {% for s in izleme.siteler %}
-    <div class="satir">
-      <input type="text" name="site_alan_adi[]" placeholder="Alan adı (ör. udemy.com)" value="{{ s.alan_adi }}">
-      <select name="site_kategori[]">
-        {% for k in kategoriler %}<option value="{{ k }}" {{ 'selected' if k == s.kategori else '' }}>{{ k }}</option>{% endfor %}
-      </select>
-      <button type="button" class="satir-sil">✕</button>
-    </div>
-    {% endfor %}
+<div class="kart">
+  <div class="kart-basligi"><h2>Veri</h2></div>
+  <p style="font-size: var(--olcek-sm); color: var(--metin-2); margin-bottom: var(--bosluk-3)">
+    Verilerin şurada saklanıyor: <code class="kod">{{ veri_dizini }}</code>
+  </p>
+  <div class="btn-satiri" style="margin-bottom: var(--bosluk-4)">
+    <a href="{{ url_for('disa_aktar_csv') }}" class="btn">CSV indir</a>
+    <a href="{{ url_for('disa_aktar_json') }}" class="btn">JSON yedek indir</a>
   </div>
-  <template id="site-satir-sablonu">
-    <div class="satir">
-      <input type="text" name="site_alan_adi[]" placeholder="Alan adı (ör. udemy.com)">
-      <select name="site_kategori[]">
-        {% for k in kategoriler %}<option value="{{ k }}">{{ k }}</option>{% endfor %}
-      </select>
-      <button type="button" class="satir-sil">✕</button>
+
+  {% if yedekler %}
+    <h3 style="margin-bottom: var(--bosluk-2)">Otomatik yedekler</h3>
+    <div class="tablo-sarmal">
+      <table>
+        <thead><tr><th>Yedek</th><th>Tarih</th><th class="sayisal">Boyut</th><th></th></tr></thead>
+        <tbody>
+          {% for y in yedekler %}
+            <tr>
+              <td><code class="kod">{{ y.dosya }}</code></td>
+              <td>{{ y.tarih.replace('T', ' ') }}</td>
+              <td class="sayisal">{{ (y.boyut / 1024) | round(1) }} KB</td>
+              <td>
+                <form method="post" action="{{ url_for('yedek_geri_yukle') }}"
+                      data-ajax data-onay="Bu yedek geri yüklenecek ve mevcut veri değişecek. Devam?">
+                  <input type="hidden" name="dosya" value="{{ y.dosya }}">
+                  <button type="submit" class="btn btn-kucuk">Geri yükle</button>
+                </form>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
     </div>
-  </template>
-  <button type="button" class="site-satir-ekle-btn">+ Site Ekle</button>
+  {% endif %}
+</div>
 
-  <p><button type="submit">Kaydet</button></p>
-</form>
-
-<script src="{{ url_for('static', filename='kurulum.js') }}"></script>
 {% endblock %}

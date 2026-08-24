@@ -1,51 +1,177 @@
+"""Masaüstü giriş noktası (PyInstaller ile .exe olarak paketlenir).
+
+Flask arka planda bir thread'de çalışır, pencere pywebview ile ana thread'te
+açılır, tepsi ikonu ayrı bir thread'de durur.
+"""
+
+import ctypes
+import logging
+import sys
 import threading
 import time
 import urllib.request
 
-import webview
+import config
+from depo import json_deposu
+from platform_katmani import tek_ornek, tepsi
+from servisler import gunlukleme, otomatik_izleme, zaman_takibi
 
-from app import app
-from config import UYGULAMA_PORTU
-from servisler import zaman_takibi
+gunlukleme.kur()
+logger = logging.getLogger(__name__)
+
+_pencere = None
+_gercekten_kapan = False
 
 
 def _sunucuyu_baslat():
-    app.run(host="127.0.0.1", port=UYGULAMA_PORTU, debug=False, use_reloader=False)
+    from app import app
+
+    app.run(
+        host="127.0.0.1", port=config.UYGULAMA_PORTU,
+        debug=False, use_reloader=False, threaded=True,
+    )
 
 
 def _sunucu_hazir_mi():
     try:
-        urllib.request.urlopen(f"http://127.0.0.1:{UYGULAMA_PORTU}/", timeout=1)
+        urllib.request.urlopen(f"http://127.0.0.1:{config.UYGULAMA_PORTU}/", timeout=1)
         return True
+    except urllib.error.HTTPError:
+        return True  # yönlendirme/hata da olsa sunucu ayakta
     except Exception:
         return False
 
 
-def _pencere_kapanirken():
+def _tepsiye_inilsin_mi():
     try:
-        zaman_takibi.tum_oturumlari_durdur()
+        return bool(json_deposu.oku()["ayarlar"].get("tepsiye_indir", True))
+    except Exception:
+        return True
+
+
+def _one_getir():
+    """pywebview'ın show()'u Windows'ta pencereyi öne getirmiyor."""
+    if sys.platform != "win32" or _pencere is None:
+        return
+    try:
+        ctypes.windll.user32.SetForegroundWindow(int(_pencere.native.Handle))
     except Exception:
         pass
 
 
-def calistir():
-    threading.Thread(target=_sunucuyu_baslat, daemon=True).start()
+def _pencereyi_ac():
+    if _pencere is None:
+        return
+    try:
+        _pencere.show()
+        _pencere.restore()
+        _one_getir()
+    except Exception:
+        logger.exception("Pencere gösterilemedi")
 
-    for _ in range(50):
+
+def _takibi_degistir():
+    if otomatik_izleme.duraklatildi_mi():
+        otomatik_izleme.devam_et()
+        tepsi.durumu_guncelle(True)
+    else:
+        otomatik_izleme.duraklat()
+        tepsi.durumu_guncelle(False)
+
+
+def _kapat():
+    """Gerçek çıkış: önce izlemeyi durdur, sonra oturumları kaydet."""
+    global _gercekten_kapan
+    _gercekten_kapan = True
+
+    # Sıra önemli: izleme durmadan oturumları kapatırsak, tarama uyanıp
+    # yeni bir aktif oturum yaratır ve diskte hayalet kayıt bırakır.
+    try:
+        otomatik_izleme.durdur()
+    except Exception:
+        logger.exception("İzleme durdurulamadı")
+
+    try:
+        kategoriler = zaman_takibi.tum_oturumlari_durdur()
+        if kategoriler:
+            logger.info("Çıkışta kapatılan oturumlar: %s", ", ".join(kategoriler))
+    except Exception:
+        logger.exception("Oturumlar kapatılamadı")
+
+    tepsi.durdur()
+    tek_ornek.kilidi_birak()
+
+    if _pencere is not None:
+        try:
+            _pencere.destroy()
+        except Exception:
+            pass
+
+
+def _pencere_kapanirken():
+    """closing handler; False döndürmek kapanışı iptal eder."""
+    if _gercekten_kapan or not _tepsiye_inilsin_mi():
+        _kapat()
+        return None
+
+    # hide()'ı burada senkron çağırmak Windows'ta süreci donduruyor
+    # (pywebview #1103) — kısa ömürlü bir thread'e veriyoruz.
+    threading.Thread(target=_gizle, daemon=True).start()
+    return False
+
+
+def _gizle():
+    try:
+        _pencere.hide()
+        logger.info("Pencere tepsiye indirildi; takip sürüyor.")
+    except Exception:
+        logger.exception("Pencere gizlenemedi")
+
+
+def calistir():
+    global _pencere
+
+    if not tek_ornek.kilidi_al():
+        logger.warning("Uygulama zaten çalışıyor; ikinci örnek kapatılıyor.")
+        return 1
+
+    import webview
+
+    threading.Thread(target=_sunucuyu_baslat, daemon=True, name="flask").start()
+    for _ in range(80):
         if _sunucu_hazir_mi():
             break
         time.sleep(0.1)
+    else:
+        logger.error("Sunucu zamanında ayağa kalkmadı")
 
-    pencere = webview.create_window(
+    otomatik_izleme.baslat()
+
+    _pencere = webview.create_window(
         "Gelişim Takip",
-        f"http://127.0.0.1:{UYGULAMA_PORTU}/",
-        width=1000,
-        height=750,
-        min_size=(700, 500),
+        f"http://127.0.0.1:{config.UYGULAMA_PORTU}/",
+        width=1180, height=820, min_size=(760, 560),
     )
-    pencere.events.closing += _pencere_kapanirken
-    webview.start()
+    _pencere.events.closing += _pencere_kapanirken
+
+    tepsi.baslat(
+        ac_geri_cagri=_pencereyi_ac,
+        duraklat_geri_cagri=_takibi_degistir,
+        cikis_geri_cagri=_kapat,
+        duraklatildi_mi=otomatik_izleme.duraklatildi_mi,
+    )
+
+    try:
+        webview.start()
+    finally:
+        # webview.start() döndüyse pencere kapanmıştır; tepsi thread'i daemon
+        # olmadığı için durdurulmazsa süreç görünmez şekilde asılı kalır.
+        if not _gercekten_kapan:
+            _kapat()
+        tepsi.durdur()
+
+    return 0
 
 
 if __name__ == "__main__":
-    calistir()
+    sys.exit(calistir())

@@ -1,17 +1,38 @@
 {
+  "surum": 2,
   "kurulum_tamamlandi": true,
   "oturumlar": [
-    {"tarih": "2026-08-20", "kategori": "Python", "baslangic": "19:00:00", "bitis": "21:00:00", "sure_dakika": 120},
-    {"tarih": "2026-08-21", "kategori": "GitHub çalışması", "baslangic": "18:30:00", "bitis": "19:15:00", "sure_dakika": 45}
+    {
+      "id": "5f2c1a9e4b7d40aa9c1e3f8b6d2a7c10",
+      "tarih": "2026-08-20",
+      "kategori": "Python",
+      "baslangic": "19:00:00",
+      "bitis": "21:00:00",
+      "sure_dakika": 118.5,
+      "kaynak": "otomatik",
+      "not": "while döngüleri, range()",
+      "duzenlendi": false
+    },
+    {
+      "tarih": "2026-08-21",
+      "id": "9a3e7c1d5b8f42ee8d0c6a2b4e9f1730",
+      "kategori": "Sertifika kursu",
+      "baslangic": "18:30:00",
+      "bitis": "19:15:00",
+      "sure_dakika": 45.0,
+      "kaynak": "otomatik",
+      "not": "",
+      "duzenlendi": false
+    }
   ],
   "aktif_oturumlar": {},
   "hedefler": {
-    "haftalik_saat": 15,
+    "haftalik_saat": 10,
     "toplam_hedef_saat": 135,
     "son_bildirim_tarihi": null
   },
   "github": {
-    "kullanici": "Yoursel71",
+    "kullanici": "",
     "son_cekilen_etkinlikler": [],
     "son_senkron": null
   },
@@ -21,6 +42,25 @@
     ],
     "siteler": [
       {"alan_adi": "udemy.com", "kategori": "Sertifika kursu"}
-    ]
+    ],
+    "ertelemeler": {}
+  },
+  "yol_haritasi": [
+    {
+      "id": "1c4a8f2e6b9d4711a3e5c7b9d1f30246",
+      "ad": "Fonksiyonlar ve return",
+      "tahmini_saat": 12,
+      "tamamlandi": false,
+      "tamamlanma_tarihi": null,
+      "sira": 0
+    }
+  ],
+  "ayarlar": {
+    "tema": "koyu",
+    "bosta_esigi_dakika": 10,
+    "seri_esigi_dakika": 15,
+    "tepsiye_indir": true,
+    "windows_ile_baslat": false,
+    "bildirimler_acik": true
   }
 }

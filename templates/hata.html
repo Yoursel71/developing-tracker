@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="tr" data-tema="koyu">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Hata {{ kod }} · Gelişim Takip</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body class="sihirbaz-govde">
+  <main class="sihirbaz" style="max-width: 460px; text-align: center">
+    <p style="font-size: 3rem; font-weight: 650; color: var(--metin-3); font-variant-numeric: tabular-nums">
+      {{ kod }}
+    </p>
+    <h1 style="margin-bottom: var(--bosluk-3)">{{ mesaj }}</h1>
+    {% if gunluk_yolu %}
+      <p style="font-size: var(--olcek-xs); color: var(--metin-3); margin-bottom: var(--bosluk-5)">
+        Log dosyası: <code class="kod">{{ gunluk_yolu }}</code>
+      </p>
+    {% endif %}
+    <a href="{{ url_for('panel') }}" class="btn btn-ana">Panele dön</a>
+  </main>
+</body>
+</html>

@@ -1,15 +1,36 @@
-name: exe-derle
+name: test-ve-derle
 
 on:
   push:
     branches: ["**"]
+  pull_request:
   workflow_dispatch:
 
 permissions:
   contents: write
 
 jobs:
+  test:
+    name: Testler
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: requirements-dev.txt
+
+      - name: Bağımlılıkları kur
+        run: pip install -r requirements-dev.txt
+
+      - name: Testleri çalıştır
+        run: python -m pytest testler/ -v
+
   derle:
+    name: Windows .exe
+    needs: test          # testler geçmeden derleme yapılmaz
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
@@ -17,17 +38,21 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
+          cache: pip
+          cache-dependency-path: requirements-dev.txt
 
       - name: Bağımlılıkları kur
-        run: |
-          pip install -r requirements.txt
-          pip install pyinstaller
+        run: pip install -r requirements-dev.txt
 
       - name: .exe derle
+        # plyer için PyInstaller hook'u yok; platform modülü dinamik import
+        # edildiği için elle bildirilmezse bildirimler .exe'de hiç çalışmaz.
         run: >-
           pyinstaller --onefile --windowed --name GelisimTakip
           --add-data "templates;templates"
           --add-data "static;static"
+          --hidden-import plyer.platforms.win.notification
+          --noconfirm
           masaustu.py
 
       - name: Artifact yükle
@@ -35,15 +60,25 @@ jobs:
         with:
           name: GelisimTakip-exe
           path: dist/GelisimTakip.exe
+          retention-days: 30
 
-      - name: Release'e ekle (her başarılı derlemede günceller)
+      - name: Release'i güncelle
+        # Yalnızca varsayılan branch: aksi hâlde her deneme branch'i,
+        # kullanıcıların indirdiği "son sürüm"ü anında ezerdi.
+        if: github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
         uses: softprops/action-gh-release@v2
         with:
           tag_name: masaustu-son-surum
-          name: "Gelişim Takip - Masaüstü (son derleme)"
+          name: "Gelişim Takip — Masaüstü (son derleme)"
           body: >-
-            Bu release her başarılı derlemede otomatik güncellenir ve her
-            zaman en son commit'ten üretilen .exe'yi içerir.
+            Bu release her başarılı derlemede otomatik güncellenir ve en son
+            koddan üretilen .exe'yi içerir.
+
+
+            Windows imzasız .exe'ler için SmartScreen uyarısı gösterir:
+            "Daha fazla bilgi" → "Yine de çalıştır" ile açabilirsin.
+
+
             Commit: ${{ github.sha }}
           files: dist/GelisimTakip.exe
         env:

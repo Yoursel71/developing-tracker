@@ -1,20 +1,74 @@
 {% extends "taban.html" %}
+{% from "_makrolar.html" import yil_heatmap, heatmap_hucre %}
 {% block baslik %}Isı Haritası{% endblock %}
 {% block icerik %}
-<h1>Isı Haritası</h1>
 
-<div class="gorunum-secici">
-  <a href="{{ url_for('heatmap_sayfasi', gorunum='haftalik') }}" class="{{ 'aktif' if gorunum == 'haftalik' else '' }}">Haftalık</a>
-  <a href="{{ url_for('heatmap_sayfasi', gorunum='aylik') }}" class="{{ 'aktif' if gorunum == 'aylik' else '' }}">Aylık</a>
+<div class="sayfa-basligi">
+  <div>
+    <h1>Isı Haritası</h1>
+    <p class="alt">Renk yoğunluğu kendi dağılımına göre ölçeklenir — koyu kareler senin yoğun günlerin.</p>
+  </div>
+  <div class="btn-satiri">
+    <a href="{{ url_for('heatmap_sayfasi', gorunum='yil') }}"
+       class="btn {{ 'btn-ana' if gorunum == 'yil' }}">Yıl</a>
+    <a href="{{ url_for('heatmap_sayfasi', gorunum='ay') }}"
+       class="btn {{ 'btn-ana' if gorunum == 'ay' }}">Ay</a>
+  </div>
 </div>
 
-<div class="heatmap-grid heatmap-{{ gorunum }}">
-  {% for gun in gunler %}
-    <div class="heatmap-hucre renk-{{ gun.renk }} {{ 'commit-var' if gun.commit_sayisi > 0 else '' }}"
-         style="--gecikme: {{ loop.index }};"
-         title="{{ gun.tarih }} — {{ gun.dakika }} dk{% if gun.commit_sayisi > 0 %}, {{ gun.commit_sayisi }} commit{% endif %}">
+{% if not veri_var %}
+  <div class="kart">
+    <div class="bos-durum">
+      <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+        <rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 9h18M8 2v4M16 2v4" stroke-linecap="round"/>
+      </svg>
+      <h3>Henüz boyanacak bir gün yok</h3>
+      <p>İlk oturumunu kaydettiğinde bu takvim dolmaya başlayacak.</p>
+      <a href="{{ url_for('panel') }}" class="btn btn-ana">Panele dön</a>
     </div>
-  {% endfor %}
-</div>
-<p class="ipucu">Koyu yeşil kareler daha yoğun çalışmayı, koyu kenarlıklı kareler o gün GitHub'a commit atıldığını gösterir.</p>
+  </div>
+{% elif gorunum == 'ay' %}
+  <div class="kart">
+    <div class="kart-basligi">
+      <h2>{{ ay_grid.ay_adi }} {{ ay_grid.yil }}</h2>
+      <div class="btn-satiri">
+        <a class="btn btn-sade btn-kucuk"
+           href="{{ url_for('heatmap_sayfasi', gorunum='ay', yil=ay_grid.onceki[0], ay=ay_grid.onceki[1]) }}">← Önceki</a>
+        <a class="btn btn-sade btn-kucuk"
+           href="{{ url_for('heatmap_sayfasi', gorunum='ay', yil=ay_grid.sonraki[0], ay=ay_grid.sonraki[1]) }}">Sonraki →</a>
+      </div>
+    </div>
+
+    <div class="ay-basliklar" aria-hidden="true">
+      {% for gun in ay_grid.gun_etiketleri %}<span>{{ gun }}</span>{% endfor %}
+    </div>
+    <div class="ay-izgara">
+      {% for gun in ay_grid.hucreler %}{{ heatmap_hucre(gun, loop.index0) }}{% endfor %}
+    </div>
+
+    <div class="heatmap-alt">
+      <span>{{ ay_grid.aktif_gun_sayisi }} günde toplam {{ ay_grid.toplam_metni }}</span>
+      <span class="legend">
+        Az
+        <span class="kutu"></span>
+        <span class="kutu" style="background: var(--yesil-1)"></span>
+        <span class="kutu" style="background: var(--yesil-2)"></span>
+        <span class="kutu" style="background: var(--yesil-3)"></span>
+        <span class="kutu" style="background: var(--yesil-4)"></span>
+        Çok
+      </span>
+    </div>
+  </div>
+{% else %}
+  <div class="kart">
+    <div class="kart-basligi">
+      <h2>Son 12 ay</h2>
+      <span style="font-size: var(--olcek-xs); color: var(--metin-3)">
+        Mavi kenarlıklı kareler o gün GitHub'a commit attığını gösterir
+      </span>
+    </div>
+    {{ yil_heatmap(yil_grid) }}
+  </div>
+{% endif %}
+
 {% endblock %}

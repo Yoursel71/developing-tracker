@@ -2,4 +2,15 @@ __pycache__/
 *.pyc
 .venv/
 venv/
+.pytest_cache/
+build/
+dist/
+*.spec
+
+# Kullanıcı verisi ve sırlar — asla commit edilmez
 data/veri.json
+data/veri.json.tmp
+data/veri.json.bozuk-*
+data/api-anahtari.txt
+data/uygulama.log*
+data/yedekler/

@@ -1,0 +1,135 @@
+{% extends "taban.html" %}
+{% from "_makrolar.html" import yil_heatmap %}
+{% block baslik %}Panel{% endblock %}
+{% block icerik %}
+
+<div class="sayfa-basligi">
+  <div>
+    <h1>Panel</h1>
+    <p class="alt">Bugüne kadarki gelişimin bir bakışta.</p>
+  </div>
+  <div class="btn-satiri">
+    {% if baslatilabilir %}
+      <form method="post" action="{{ url_for('oturum_baslat') }}" data-ajax class="btn-satiri" style="margin-top: 0">
+        <select name="kategori" aria-label="Başlatılacak kategori" style="width: auto; margin-top: 0">
+          {% for k in baslatilabilir %}<option value="{{ k }}">{{ k }}</option>{% endfor %}
+        </select>
+        <button type="submit" class="btn btn-ana">Başlat</button>
+      </form>
+    {% endif %}
+  </div>
+</div>
+
+<section id="aktif-oturumlar" class="izgara izgara-2" aria-label="Aktif oturumlar">
+  {% for oturum in aktif_oturumlar %}
+    <div class="oturum-kart {{ 'bosta' if oturum.duruyor }}" data-kategori="{{ oturum.kategori }}">
+      <div class="oturum-ust">
+        <span class="oturum-kategori">{{ oturum.kategori }}</span>
+        {% if oturum.kaynak == 'otomatik' %}
+          <span class="rozet rozet-otomatik"><span class="nokta nokta-canli"></span>otomatik</span>
+        {% else %}
+          <span class="rozet rozet-manuel">elle</span>
+        {% endif %}
+        {% if oturum.durum_metni %}
+          <span class="rozet rozet-bosta">{{ oturum.durum_metni }}</span>
+        {% endif %}
+      </div>
+      <div class="sayac" role="timer" aria-live="off" data-gecen="{{ oturum.gecen_saniye }}"
+           data-duruyor="{{ '1' if oturum.duruyor else '0' }}">00:00:00</div>
+      <form method="post" action="{{ url_for('oturum_durdur') }}" data-ajax>
+        <input type="hidden" name="kategori" value="{{ oturum.kategori }}">
+        <button type="submit" class="btn">Durdur ve kaydet</button>
+      </form>
+    </div>
+  {% endfor %}
+</section>
+
+<section class="izgara izgara-4" style="margin-top: var(--bosluk-4)">
+  <div class="metrik">
+    <span class="metrik-etiket">Bugün</span>
+    <span class="metrik-deger" id="metrik-bugun">{{ bugun_dakika | round(0) | int }}<span style="font-size:var(--olcek-md);color:var(--metin-3)"> dk</span></span>
+    <span class="metrik-alt" id="metrik-bugun-alt">
+      {% if seri.bugun_tamam %}Bugünü tamamladın{% else %}Seri için {{ (seri.esik_dakika - bugun_dakika) | round(0) | int }} dk daha{% endif %}
+    </span>
+  </div>
+
+  <div class="metrik">
+    <span class="metrik-etiket">Bu hafta</span>
+    <span class="metrik-deger" id="metrik-hafta">{{ haftalik.saat }}<span style="font-size:var(--olcek-md);color:var(--metin-3)"> / {{ haftalik.hedef_saat }} s</span></span>
+    <div class="ilerleme {{ 'asildi' if haftalik.asildi }}" role="progressbar"
+         aria-valuenow="{{ haftalik.yuzde }}" aria-valuemin="0" aria-valuemax="100"
+         aria-label="Haftalık hedef ilerlemesi">
+      <div class="ilerleme-dolgu" id="hafta-dolgu" style="width: {{ haftalik.cubuk_yuzde }}%"></div>
+    </div>
+    <span class="metrik-alt" id="metrik-hafta-alt">
+      {% if haftalik.asildi %}Hedefi %{{ haftalik.yuzde | round(0) | int }} ile aştın 🎉
+      {% else %}{{ haftalik.kalan_saat }} saat kaldı · {{ haftalik.kalan_gun }} gün var{% endif %}
+    </span>
+  </div>
+
+  <div class="metrik">
+    <span class="metrik-etiket">Güncel seri</span>
+    <span class="metrik-deger" id="metrik-seri">{{ seri.guncel }}<span style="font-size:var(--olcek-md);color:var(--metin-3)"> gün</span></span>
+    <span class="metrik-alt">En uzun: {{ seri.en_uzun }} gün</span>
+  </div>
+
+  <div class="metrik">
+    <span class="metrik-etiket">Sıradaki konu</span>
+    {% if yol_ozeti.siradaki %}
+      <span class="metrik-deger" style="font-size: var(--olcek-lg)">{{ yol_ozeti.siradaki.ad }}</span>
+      <span class="metrik-alt">
+        ~{{ yol_ozeti.siradaki.tahmini_saat }} saat
+        {% if yol_ozeti.siradaki_tahmini_gun %}· bu tempoda ~{{ yol_ozeti.siradaki_tahmini_gun }} gün{% endif %}
+      </span>
+    {% else %}
+      <span class="metrik-deger" style="font-size: var(--olcek-lg)">—</span>
+      <span class="metrik-alt"><a href="{{ url_for('yol_haritasi_sayfasi') }}">Yol haritası oluştur</a></span>
+    {% endif %}
+  </div>
+</section>
+
+<div class="kart" style="margin-top: var(--bosluk-4)">
+  <div class="kart-basligi">
+    <h2>Son 3 ay</h2>
+    <a href="{{ url_for('heatmap_sayfasi') }}" class="btn btn-sade btn-kucuk">Tümünü gör →</a>
+  </div>
+  {{ yil_heatmap(mini_heatmap) }}
+</div>
+
+<div class="kart">
+  <div class="kart-basligi">
+    <h2>Son oturumlar</h2>
+    <a href="{{ url_for('gecmis_sayfasi') }}" class="btn btn-sade btn-kucuk">Geçmiş →</a>
+  </div>
+  {% if son_oturumlar %}
+    <div class="tablo-sarmal">
+      <table>
+        <thead>
+          <tr><th>Tarih</th><th>Kategori</th><th class="sayisal">Süre</th><th>Not</th></tr>
+        </thead>
+        <tbody>
+          {% for o in son_oturumlar %}
+            <tr>
+              <td>{{ o.tarih }}</td>
+              <td>{{ o.kategori }}</td>
+              <td class="sayisal">{{ o.sure_dakika }} dk</td>
+              <td style="color: var(--metin-2)">{{ o['not'] or '—' }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <div class="bos-durum">
+      <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+        <circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2" stroke-linecap="round"/>
+      </svg>
+      <h3>Henüz kayıtlı oturum yok</h3>
+      <p>Yukarıdan elle bir oturum başlatabilir ya da Ayarlar'dan takip edeceğin
+         programı seçip otomatik takibi devreye alabilirsin.</p>
+      <a href="{{ url_for('ayarlar_sayfasi') }}" class="btn btn-ana">Otomatik takibi kur</a>
+    </div>
+  {% endif %}
+</div>
+
+{% endblock %}
