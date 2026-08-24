@@ -187,3 +187,46 @@ def test_kisa_gun_adlari_cakismaz():
     kisalar = [g["kisa"] for g in istatistikler.haftanin_gunleri_dagilimi([])]
     assert len(set(kisalar)) == 7, f"Çakışan kısaltma: {kisalar}"
     assert kisalar == ["Pzt", "Sal", "Çar", "Per", "Cum", "Cmt", "Paz"]
+
+
+# --- Rekorlar ve hafta karşılaştırması --------------------------------------
+
+def test_en_uzun_oturum():
+    oturumlar = [oturum("2026-03-18", 45), oturum("2026-03-19", 210), oturum("2026-03-20", 60)]
+    en_uzun = istatistikler.en_uzun_oturum(oturumlar)
+    assert en_uzun["dakika"] == 210
+    assert en_uzun["tarih"] == "2026-03-19"
+
+
+def test_en_uzun_oturum_bos_veride_none():
+    assert istatistikler.en_uzun_oturum([]) is None
+
+
+def test_hafta_karsilastirmasi_ayni_gune_kadar_kiyaslar():
+    """Salı günü tam bir haftayla kıyaslamak yanıltıcı olurdu."""
+    # BUGUN = 2026-03-20 Cuma. Bu hafta 16-22, geçen hafta 09-15.
+    oturumlar = [
+        oturum("2026-03-16", 60), oturum("2026-03-17", 60),   # bu hafta: 120
+        oturum("2026-03-09", 30), oturum("2026-03-10", 30),   # geçen hafta ilk 2 gün: 60
+        oturum("2026-03-14", 120),                            # geçen hafta Cmt (bugünden sonra)
+    ]
+    k = istatistikler.hafta_karsilastirmasi(oturumlar, BUGUN)
+
+    assert k["bu_hafta_dakika"] == 120
+    assert k["gecen_hafta_dakika"] == 180
+    assert k["gecen_hafta_ayni_gun_dakika"] == 60
+    assert k["degisim_yuzde"] == 100.0
+    assert k["yonu"] == "artis"
+
+
+def test_hafta_karsilastirmasi_veri_yoksa_yuzde_none():
+    k = istatistikler.hafta_karsilastirmasi([oturum("2026-03-16", 60)], BUGUN)
+    assert k["degisim_yuzde"] is None
+    assert k["yonu"] == "veri_yok"
+
+
+def test_son_haftalar_uzunluk_ve_isaret():
+    haftalar = istatistikler.son_haftalar([oturum("2026-03-16", 90)], 8, BUGUN)
+    assert len(haftalar) == 8
+    assert haftalar[-1]["bu_hafta"] is True
+    assert haftalar[-1]["dakika"] == 90

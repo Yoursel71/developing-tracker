@@ -46,9 +46,18 @@ def sayi(deger, alan_adi, varsayilan=0.0, en_az=0.0, en_cok=100000.0, zorunlu=Fa
     return sonuc
 
 
-def kategori(deger):
+def kategori(deger, gecerli_adlar=None):
+    """Kategoriyi kullanıcının tanımlı listesine karşı doğrular.
+
+    Uydurma bir kategori kabul edilirse ``aktif_oturumlar``'a yazılır ve
+    arayüzde hiç görünmediği için asla durdurulamazdı.
+    """
     temiz = (deger or "").strip()
-    if temiz not in config.KATEGORILER:
+    if gecerli_adlar is None:
+        from servisler import kategoriler as kategori_servisi
+
+        gecerli_adlar = kategori_servisi.adlar()
+    if temiz not in gecerli_adlar:
         raise DogrulamaHatasi(f"Geçersiz kategori: {deger or '(boş)'}", "kategori")
     return temiz
 
@@ -110,7 +119,7 @@ def islem_adi(deger):
     return temiz
 
 
-def izleme_listelerini_dogrula(editorler, siteler):
+def izleme_listelerini_dogrula(editorler, siteler, gecerli_adlar=None):
     """Çakışma ve tekrarları yakalar.
 
     Aynı işlem iki kategoriye eşlenirse VS Code açılınca iki oturum birden
@@ -122,7 +131,7 @@ def izleme_listelerini_dogrula(editorler, siteler):
         islem = islem_adi(kayit.get("islem_adi"))
         if not islem:
             continue
-        kat = kategori(kayit.get("kategori"))
+        kat = kategori(kayit.get("kategori"), gecerli_adlar)
         anahtar = islem.lower()
         if anahtar in islem_kategorileri:
             if islem_kategorileri[anahtar] != kat:
@@ -146,7 +155,7 @@ def izleme_listelerini_dogrula(editorler, siteler):
         alan = alan_adi_normallestir(kayit.get("alan_adi"))
         if not alan:
             continue
-        kat = kategori(kayit.get("kategori"))
+        kat = kategori(kayit.get("kategori"), gecerli_adlar)
         if alan in alan_kategorileri:
             if alan_kategorileri[alan] != kat:
                 raise DogrulamaHatasi(

@@ -20,7 +20,7 @@ import threading
 import config
 from depo import json_deposu
 from platform_katmani import bosta, surecler
-from servisler import zaman_takibi
+from servisler import bildirim, pomodoro, zaman_takibi
 
 logger = logging.getLogger(__name__)
 
@@ -32,6 +32,10 @@ _kalp_kilidi = threading.Lock()
 _durdur_bayragi = threading.Event()
 _thread = None
 _duraklatildi = threading.Event()
+
+# Tarama turu içinde biriken bildirimler; kilit bırakıldıktan sonra gönderilir
+# (plyer/Windows toast çağrısı kilidi tutarken takılmasın diye).
+_bildirim_kuyrugu = []
 
 # Bir önceki turun duvar saati; uyku/askıya alma tespiti için.
 _onceki_tur_zamani = None
@@ -153,6 +157,18 @@ def tara_bir_kez(su_an=None, bosta_saniye=None, calisan_islemler=None):
             ):
                 degisti_isaretle()
 
+    pomodoro_bildirimi = pomodoro.kontrol_et(su_an)
+    if pomodoro_bildirimi:
+        _bildirim_kuyrugu.append(pomodoro_bildirimi)
+
+    _bekleyen_bildirimleri_gonder()
+
+
+def _bekleyen_bildirimleri_gonder():
+    while _bildirim_kuyrugu:
+        baslik, mesaj = _bildirim_kuyrugu.pop(0)
+        bildirim.bildirim_gonder(baslik, mesaj)
+
 
 def _algilaniyor_mu(kategori, editorler, siteler, calisan_islemler, su_an):
     for islem in editorler.get(kategori, []):
@@ -189,6 +205,7 @@ def _islem_gor(veri, kategori, editorler, siteler, calisan_islemler,
     # --- Otomatik oturum, hâlâ algılanıyor ---
     if algilaniyor and not duraklatildi_mi():
         aktif.pop("kayip_zamani", None)
+        _mola_gerekli_mi(veri, kategori, aktif, su_an)
         return _sureyi_isaretle(aktif, su_an, kullanici_bosta or uyku_oldu)
 
     # --- Algılanmıyor: grace süresi ---
@@ -209,6 +226,33 @@ def _islem_gor(veri, kategori, editorler, siteler, calisan_islemler,
     zaman_takibi.aktif_oturumu_kapat(veri, kategori, bitis=kayip_zamani)
     logger.info("Otomatik oturum kapandı: %s", kategori)
     return True
+
+
+def _mola_gerekli_mi(veri, kategori, aktif, su_an):
+    """Uzun kesintisiz çalışmada mola önerir.
+
+    Bildirim kilit dışında gönderilsin diye kuyruğa alınır; ``tara_bir_kez``
+    turu bitince gönderilir.
+    """
+    if not veri["ayarlar"].get("mola_hatirlatici", True):
+        return
+    if not veri["ayarlar"].get("bildirimler_acik", True):
+        return
+
+    kesintisiz_dakika = (aktif.get("birikmis_saniye") or 0) / 60
+    if kesintisiz_dakika < config.MOLA_ONERI_DAKIKA:
+        return
+
+    son_oneri = zaman_takibi.zaman_coz(aktif.get("son_mola_onerisi"))
+    if son_oneri and (su_an - son_oneri).total_seconds() < config.MOLA_TEKRAR_ARALIGI_DAKIKA * 60:
+        return
+
+    aktif["son_mola_onerisi"] = su_an.isoformat()
+    _bildirim_kuyrugu.append((
+        "Mola zamanı",
+        f"{int(kesintisiz_dakika // 60)} saattir aralıksız {kategori} çalışıyorsun. "
+        "Biraz ara vermek iyi gelir.",
+    ))
 
 
 def _sureyi_isaretle(aktif, su_an, bosta_mi, biriksin=True):

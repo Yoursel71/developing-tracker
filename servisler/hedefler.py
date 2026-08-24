@@ -66,7 +66,25 @@ def _bildirim_metni(veri, bugun):
         veri["oturumlar"], ayarlar.get("seri_esigi_dakika"), bugun
     )
 
-    # 1) Seri riski: akşam olmuş, bugün henüz eşiği geçmemiş, seri var.
+    # 1) Pazar akşamı haftalık özet.
+    if bugun.weekday() == 6 and dt.datetime.now().hour >= 18:
+        karsilastirma = istatistikler.hafta_karsilastirmasi(veri["oturumlar"], bugun)
+        if karsilastirma["degisim_yuzde"] is not None:
+            yon = ("geçen haftadan %{:.0f} fazla".format(abs(karsilastirma["degisim_yuzde"]))
+                   if karsilastirma["yonu"] == "artis"
+                   else "geçen haftadan %{:.0f} az".format(abs(karsilastirma["degisim_yuzde"]))
+                   if karsilastirma["yonu"] == "azalis" else "geçen haftayla aynı")
+            ek = f" — {yon}."
+        else:
+            ek = "."
+        durum = "Hedefi tutturdun 🎉" if ilerleme["yuzde"] >= 100 else \
+            f"Hedefin {ilerleme['hedef_saat']} saatti."
+        return (
+            "Haftalık özet",
+            f"Bu hafta {ilerleme['saat']} saat çalıştın{ek} {durum}",
+        )
+
+    # 2) Seri riski: akşam olmuş, bugün henüz eşiği geçmemiş, seri var.
     if seri["guncel"] >= 3 and not seri["bugun_tamam"] and bugun.weekday() is not None:
         simdi = dt.datetime.now()
         if simdi.hour >= 19:
@@ -76,14 +94,14 @@ def _bildirim_metni(veri, bugun):
                 f"{seri['esik_dakika']} dakikayı geçmedin.",
             )
 
-    # 2) Hafta sonu hedef uyarısı.
+    # 3) Hafta sonu hedef uyarısı.
     if bugun.weekday() >= 5 and ilerleme["hedef_saat"] > 0 and ilerleme["yuzde"] < 100:
         return (
             "Haftalık hedef uyarısı",
             f"Bu hafta hedefine {ilerleme['kalan_saat']} saat kaldı, hafta bitiyor!",
         )
 
-    # 3) Hafta ortası ilerleme bilgisi.
+    # 4) Hafta ortası ilerleme bilgisi.
     if bugun.weekday() == 2 and ilerleme["hedef_saat"] > 0 and ilerleme["yuzde"] < 40:
         return (
             "Hafta ortası",

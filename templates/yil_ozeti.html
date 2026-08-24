@@ -1,0 +1,131 @@
+{% extends "taban.html" %}
+{% block baslik %}{{ ozet.yil }} Özeti{% endblock %}
+{% block icerik %}
+
+<div class="sayfa-basligi">
+  <div>
+    <h1>{{ ozet.yil }} Özeti</h1>
+    <p class="alt">Yılın bir bakışta.</p>
+  </div>
+  {% if yillar | length > 1 %}
+    <div class="btn-satiri">
+      {% for y in yillar %}
+        <a href="{{ url_for('yil_ozeti_sayfasi', yil=y) }}"
+           class="btn btn-kucuk {{ 'btn-ana' if y == ozet.yil }}">{{ y }}</a>
+      {% endfor %}
+    </div>
+  {% endif %}
+</div>
+
+{% if not ozet.veri_var %}
+  <div class="kart">
+    <div class="bos-durum">
+      <h3>{{ ozet.yil }} için kayıt yok</h3>
+      <p>Bu yıl kaydedilmiş bir oturum bulunamadı.</p>
+      <a href="{{ url_for('panel') }}" class="btn btn-ana">Panele dön</a>
+    </div>
+  </div>
+{% else %}
+
+<div class="yil-kahraman">
+  <div class="dev-sayi">{{ ozet.toplam_saat }}</div>
+  <p><strong>saat</strong> öğrenmeye ayırdın</p>
+  <p style="font-size: var(--olcek-sm)">
+    {{ ozet.aktif_gun_sayisi }} farklı günde, {{ ozet.oturum_sayisi }} oturumda
+  </p>
+</div>
+
+<section class="izgara izgara-4">
+  <div class="metrik">
+    <span class="metrik-etiket">En uzun seri</span>
+    <span class="metrik-deger">{{ ozet.en_uzun_seri }}<span style="font-size:var(--olcek-md);color:var(--metin-3)"> gün</span></span>
+  </div>
+  <div class="metrik">
+    <span class="metrik-etiket">Çalıştığın günlerde ort.</span>
+    <span class="metrik-deger">{{ ozet.gunluk_ortalama | round(0) | int }}<span style="font-size:var(--olcek-md);color:var(--metin-3)"> dk</span></span>
+  </div>
+  <div class="metrik">
+    <span class="metrik-etiket">En verimli ay</span>
+    <span class="metrik-deger" style="font-size: var(--olcek-xl)">{{ ozet.en_iyi_ay.etiket if ozet.en_iyi_ay else '—' }}</span>
+    {% if ozet.en_iyi_ay %}
+      <span class="metrik-alt">{{ (ozet.en_iyi_ay.dakika / 60) | round(1) }} saat</span>
+    {% endif %}
+  </div>
+  <div class="metrik">
+    <span class="metrik-etiket">Tarzın</span>
+    <span class="metrik-deger" style="font-size: var(--olcek-lg)">
+      {% if ozet.gece_kusu_mu %}Gece kuşu 🦉{% else %}Gündüzcü ☀️{% endif %}
+    </span>
+    {% if ozet.en_iyi_saat %}
+      <span class="metrik-alt">En çok {{ '%02d'|format(ozet.en_iyi_saat.saat) }}:00 civarı</span>
+    {% endif %}
+  </div>
+</section>
+
+<div class="kart" style="margin-top: var(--bosluk-4)">
+  <div class="kart-basligi"><h2>Aylara göre</h2></div>
+  <div id="ay-grafik" data-veri='{{ ozet.aylar | tojson }}'></div>
+</div>
+
+<div class="izgara izgara-2">
+  <div class="kart">
+    <div class="kart-basligi"><h2>Neye çalıştın</h2></div>
+    {% for k in ozet.kategoriler %}
+      <div class="dagilim-satiri">
+        <span class="dagilim-ad">
+          <span class="kategori-noktasi" style="background: {{ renkler.get(k.kategori, '#6e7d8d') }}"></span>
+          {{ k.kategori }}
+        </span>
+        <div class="dagilim-cubuk">
+          <div class="dagilim-dolgu" style="width: {{ k.yuzde }}%; background: {{ renkler.get(k.kategori, '#6e7d8d') }}"></div>
+        </div>
+        <span class="dagilim-deger">{{ (k.dakika / 60) | round(1) }} s</span>
+      </div>
+    {% endfor %}
+  </div>
+
+  <div class="kart">
+    <div class="kart-basligi"><h2>Öne çıkanlar</h2></div>
+    <ul style="list-style: none; padding: 0; font-size: var(--olcek-sm); line-height: 2">
+      {% if ozet.en_uzun_oturum %}
+        <li>🔥 En uzun tek oturum: <strong>{{ (ozet.en_uzun_oturum.dakika / 60) | round(1) }} saat</strong>
+          ({{ ozet.en_uzun_oturum.tarih }})</li>
+      {% endif %}
+      {% if ozet.en_cok_calisilan_gun %}
+        <li>📅 En yoğun gün: <strong>{{ ozet.en_cok_calisilan_gun.tarih }}</strong>
+          — {{ (ozet.en_cok_calisilan_gun.dakika / 60) | round(1) }} saat</li>
+      {% endif %}
+      {% if ozet.en_iyi_gun and ozet.en_iyi_gun.dakika %}
+        <li>💪 Favori günün: <strong>{{ ozet.en_iyi_gun.gun }}</strong></li>
+      {% endif %}
+      {% if ozet.tamamlanan_taslar %}
+        <li>🎓 Bu yıl <strong>{{ ozet.tamamlanan_taslar | length }} konu</strong> tamamladın:
+          {{ ozet.tamamlanan_taslar | map(attribute='ad') | join(', ') }}</li>
+      {% endif %}
+    </ul>
+  </div>
+</div>
+
+<div class="kart">
+  <div class="kart-basligi"><h2>Rozetler</h2></div>
+  <p style="font-size: var(--olcek-sm); color: var(--metin-2); margin-bottom: var(--bosluk-4)">
+    Bu rozetler bilgisayarında üretilir, hiçbir yere gönderilmez.
+    İndirip README'ne veya istediğin yere koyabilirsin.
+  </p>
+  <div class="izgara izgara-2">
+    {% for r in rozetler %}
+      <div>
+        <div class="rozet-onizleme">
+          <img src="{{ url_for('rozet', anahtar=r.anahtar) }}" alt="{{ r.etiket }}: {{ r.deger }}">
+        </div>
+        <div class="btn-satiri">
+          <a href="{{ url_for('rozet', anahtar=r.anahtar) }}" download="gelisim-{{ r.anahtar }}.svg"
+             class="btn btn-kucuk">SVG indir</a>
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+</div>
+
+{% endif %}
+{% endblock %}

@@ -6,6 +6,8 @@ Sürüm geçmişi:
 * **v1** — ``aktif_oturumlar`` (kategoriye göre sözlük), ``izleme`` eklendi.
 * **v2** — oturumlara ``id``/``not``, aktif oturumlara ``son_gorulme`` +
   ``birikmis_saniye`` (checkpoint modeli), ``yol_haritasi`` ve ``ayarlar``.
+* **v3** — kullanıcı tanımlı ``kategoriler`` (önceden kodda sabitti),
+  ``hedef_gecmisi`` ve pomodoro durumu.
 """
 
 import logging
@@ -24,6 +26,34 @@ def _mevcut_surum(veri):
     if "aktif_oturumlar" in veri or "izleme" in veri:
         return 1
     return 0
+
+
+def _v2_den_v3e(veri):
+    """Sabit kategori listesini kullanıcı verisine taşır.
+
+    Varsayılanlara ek olarak, geçmiş oturumlarda geçen ama listede olmayan
+    kategoriler de korunur; aksi hâlde eski kayıtlar sahipsiz kalırdı.
+    """
+    import config
+
+    adlar = list(config.VARSAYILAN_KATEGORILER)
+    for oturum in veri.get("oturumlar", []):
+        ad = (oturum or {}).get("kategori")
+        if ad and ad not in adlar:
+            adlar.append(ad)
+    for kayit in (veri.get("izleme", {}).get("editorler", []) +
+                  veri.get("izleme", {}).get("siteler", [])):
+        ad = (kayit or {}).get("kategori")
+        if ad and ad not in adlar:
+            adlar.append(ad)
+
+    veri["kategoriler"] = [
+        {"id": uuid.uuid4().hex, "ad": ad, "renk": config.KATEGORI_PALETI[i % len(config.KATEGORI_PALETI)], "sira": i}
+        for i, ad in enumerate(adlar)
+    ]
+    veri.setdefault("hedef_gecmisi", [])
+    veri["surum"] = 3
+    return veri
 
 
 def _v0_dan_v1e(veri):
@@ -72,6 +102,7 @@ def _v1_den_v2ye(veri):
 _GOCLER = {
     0: _v0_dan_v1e,
     1: _v1_den_v2ye,
+    2: _v2_den_v3e,
 }
 
 

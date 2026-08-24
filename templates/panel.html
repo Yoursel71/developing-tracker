@@ -20,6 +20,45 @@
   </div>
 </div>
 
+{% if motivasyon %}
+  <p class="motivasyon">{{ motivasyon }}</p>
+{% endif %}
+
+{% if pomodoro_acik %}
+<div class="kart pomodoro-kart" id="pomodoro-kart"
+     data-aktif="{{ '1' if pomodoro_durumu.aktif else '0' }}"
+     data-kalan="{{ pomodoro_durumu.kalan_saniye }}"
+     data-asama="{{ pomodoro_durumu.asama }}">
+  <div class="kart-basligi">
+    <h2>Pomodoro</h2>
+    <span id="pomodoro-tur" style="font-size: var(--olcek-xs); color: var(--metin-3)">
+      {% if pomodoro_durumu.aktif %}{{ pomodoro_durumu.tur + 1 }}. tur{% endif %}
+    </span>
+  </div>
+  <div class="pomodoro-govde">
+    <div>
+      <span class="metrik-etiket" id="pomodoro-asama">
+        {{ pomodoro_durumu.asama_metni if pomodoro_durumu.aktif else 'Kapalı' }}
+      </span>
+      <p class="sayac" id="pomodoro-sayac" style="font-size: var(--olcek-2xl)">
+        {{ '%02d:%02d' | format(pomodoro_durumu.kalan_saniye // 60, pomodoro_durumu.kalan_saniye % 60) }}
+      </p>
+    </div>
+    <div class="btn-satiri">
+      {% if pomodoro_durumu.aktif %}
+        <button type="button" class="btn btn-kucuk" data-pomodoro="atla">Aşamayı atla</button>
+        <button type="button" class="btn btn-kucuk" data-pomodoro="durdur">Durdur</button>
+      {% else %}
+        <button type="button" class="btn btn-ana btn-kucuk" data-pomodoro="baslat">Başlat</button>
+      {% endif %}
+    </div>
+  </div>
+  <p style="font-size: var(--olcek-xs); color: var(--metin-3); margin-top: var(--bosluk-2)">
+    Pomodoro yalnızca ritim tutar — süreni her zaman otomatik takip ölçer.
+  </p>
+</div>
+{% endif %}
+
 <section id="aktif-oturumlar" class="izgara izgara-2" aria-label="Aktif oturumlar">
   {% for oturum in aktif_oturumlar %}
     <div class="oturum-kart {{ 'bosta' if oturum.duruyor }}" data-kategori="{{ oturum.kategori }}">

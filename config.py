@@ -65,7 +65,47 @@ BILINEN_SITELER = {
     "BTK Akademi": "btkakademi.gov.tr",
 }
 
-KATEGORILER = ["Python", "GitHub çalışması", "Sertifika kursu", "Diğer"]
+# İlk kurulumda oluşturulan kategoriler. Kullanıcı bunları Ayarlar'dan
+# değiştirebilir, silebilir ve kendi projelerini ekleyebilir; bu liste
+# yalnızca başlangıç değeridir.
+VARSAYILAN_KATEGORILER = ["Python", "GitHub çalışması", "Sertifika kursu", "Diğer"]
+
+# Yeni kategorilere sırayla atanan renkler.
+KATEGORI_PALETI = [
+    "#3fb950",  # yeşil
+    "#58a6ff",  # mavi
+    "#bc8cff",  # mor
+    "#f0883e",  # turuncu
+    "#e3b341",  # sarı
+    "#ff7b72",  # kırmızı
+    "#39c5cf",  # turkuaz
+    "#db61a2",  # pembe
+]
+
+# --- Mola hatırlatıcısı -----------------------------------------------------
+MOLA_ONERI_DAKIKA = 120          # bu kadar kesintisiz çalışınca mola öner
+MOLA_TEKRAR_ARALIGI_DAKIKA = 60  # aynı oturumda tekrar önermeden önce
+
+# --- Pomodoro ---------------------------------------------------------------
+POMODORO_CALISMA_DAKIKA = 25
+POMODORO_KISA_MOLA_DAKIKA = 5
+POMODORO_UZUN_MOLA_DAKIKA = 15
+POMODORO_UZUN_MOLA_ARALIGI = 4   # kaç turda bir uzun mola
+
+# --- Motivasyon (varsayılan kapalı) -----------------------------------------
+# Gün içinde sabit kalır; her sayfa yenilemede değişse gürültü olurdu.
+MOTIVASYON_SOZLERI = [
+    "Her uzman bir zamanlar acemiydi.",
+    "Bugün 20 dakika, hiç yapmamaktan sonsuz daha iyi.",
+    "Kod yazmayı okuyarak değil, yazarak öğrenirsin.",
+    "Hata mesajı düşman değil, yol tarifidir.",
+    "Küçük ve düzenli, büyük ve düzensizden hızlıdır.",
+    "Anlamadığın satırı bir kez daha oku, sonra çalıştır.",
+    "Dün bilmediğin bir şeyi bugün biliyorsun.",
+    "Kopyaladığın kodu açıklayabiliyorsan öğrenmişsindir.",
+    "Takıldığın yer, öğrenmenin başladığı yerdir.",
+    "Bitmiş küçük proje, bitmemiş büyük projeden değerlidir.",
+]
 
 # Hazır Python yol haritası taslağı (kurulumda oluşturulur, düzenlenebilir).
 VARSAYILAN_YOL_HARITASI = [

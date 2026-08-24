@@ -1,0 +1,116 @@
+{% extends "taban.html" %}
+{% block baslik %}Rapor{% endblock %}
+{% block icerik %}
+
+<div class="sayfa-basligi">
+  <div>
+    <h1>Gelişim Raporu</h1>
+    <p class="alt">{{ uretim_tarihi }} tarihinde üretildi</p>
+  </div>
+  <div class="btn-satiri">
+    <button type="button" class="btn btn-ana" onclick="window.print()">Yazdır / PDF kaydet</button>
+  </div>
+</div>
+
+<div class="uyari-seridi" role="status" style="border-color: var(--kenar); background: var(--yuzey-2)">
+  PDF için: <strong>Yazdır</strong> → hedef olarak <strong>"PDF olarak kaydet"</strong> seç.
+</div>
+
+<div class="kart">
+  <div class="kart-basligi"><h2>Genel</h2></div>
+  <div class="izgara izgara-4">
+    <div>
+      <span class="metrik-etiket">Toplam</span>
+      <p class="metrik-deger">{{ istatistik.toplam_saat }}<span style="font-size:var(--olcek-md);color:var(--metin-3)"> s</span></p>
+    </div>
+    <div>
+      <span class="metrik-etiket">Oturum</span>
+      <p class="metrik-deger">{{ istatistik.oturum_sayisi }}</p>
+    </div>
+    <div>
+      <span class="metrik-etiket">Aktif gün</span>
+      <p class="metrik-deger">{{ istatistik.aktif_gun_sayisi }}</p>
+    </div>
+    <div>
+      <span class="metrik-etiket">En uzun seri</span>
+      <p class="metrik-deger">{{ istatistik.seri.en_uzun }}<span style="font-size:var(--olcek-md);color:var(--metin-3)"> gün</span></p>
+    </div>
+  </div>
+</div>
+
+<div class="kart">
+  <div class="kart-basligi"><h2>Bu hafta</h2></div>
+  <p>{{ haftalik.saat }} / {{ haftalik.hedef_saat }} saat (%{{ haftalik.yuzde | round(0) | int }})</p>
+  <div class="ilerleme" style="margin-top: var(--bosluk-2)">
+    <div class="ilerleme-dolgu" style="width: {{ haftalik.cubuk_yuzde }}%"></div>
+  </div>
+</div>
+
+<div class="kart">
+  <div class="kart-basligi"><h2>Kategori dağılımı</h2></div>
+  {% for k in istatistik.kategori_dagilimi %}
+    <div class="dagilim-satiri">
+      <span class="dagilim-ad">
+        <span class="kategori-noktasi" style="background: {{ renkler.get(k.kategori, '#6e7d8d') }}"></span>
+        {{ k.kategori }}
+      </span>
+      <div class="dagilim-cubuk">
+        <div class="dagilim-dolgu" style="width: {{ k.yuzde }}%; background: {{ renkler.get(k.kategori, '#6e7d8d') }}"></div>
+      </div>
+      <span class="dagilim-deger">{{ (k.dakika / 60) | round(1) }} s · %{{ k.yuzde | round(0) | int }}</span>
+    </div>
+  {% endfor %}
+</div>
+
+<div class="kart">
+  <div class="kart-basligi"><h2>Yol haritası</h2></div>
+  <p style="font-size: var(--olcek-sm); color: var(--metin-2); margin-bottom: var(--bosluk-3)">
+    {{ yol_ozeti.tamamlanan_sayisi }} / {{ yol_ozeti.toplam_sayisi }} konu ·
+    {{ yol_ozeti.kalan_saat }} saat kaldı
+  </p>
+  <div class="tablo-sarmal">
+    <table>
+      <thead><tr><th>Konu</th><th class="sayisal">Tahmini</th><th>Durum</th></tr></thead>
+      <tbody>
+        {% for tas in yol %}
+          <tr>
+            <td>{{ tas.ad }}</td>
+            <td class="sayisal">{{ tas.tahmini_saat }} s</td>
+            <td>{% if tas.tamamlandi %}✅ {{ tas.tamamlanma_tarihi or '' }}{% else %}—{% endif %}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="kart">
+  <div class="kart-basligi"><h2>Hedef geçmişi</h2></div>
+  {% for h in gecmis %}
+    <div class="gecmis-satiri">
+      <span class="gecmis-isaret">{% if h.devam_ediyor %}⏳{% elif h.basarili %}✅{% else %}—{% endif %}</span>
+      <span class="gecmis-etiket">{{ h.etiket }}</span>
+      <div class="gecmis-cubuk">
+        <div class="gecmis-dolgu {{ '' if h.basarili else 'basarisiz' }}" style="width: {{ [h.yuzde, 100] | min }}%"></div>
+      </div>
+      <span class="gecmis-deger">{{ h.saat }} / {{ h.hedef_saat }} s</span>
+    </div>
+  {% endfor %}
+</div>
+
+<div class="kart">
+  <div class="kart-basligi"><h2>Tahmin</h2></div>
+  {% set t = istatistik.tahmin %}
+  {% if t.tamamlandi %}
+    <p>Hedefe ulaşıldı 🎉</p>
+  {% elif t.hafta %}
+    <p>Mevcut tempoyla (~{{ t.tempo_dakika | round(0) | int }} dk/gün) tahmini bitiş:
+      <strong>~{{ t.hafta }} hafta</strong>
+      {% if t.tahmini_tarih %}({{ t.tahmini_tarih }}){% endif %}
+    </p>
+  {% else %}
+    <p style="color: var(--metin-2)">{{ t.mesaj }}</p>
+  {% endif %}
+</div>
+
+{% endblock %}

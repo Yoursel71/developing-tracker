@@ -125,6 +125,67 @@
         ? durum.aktif_oturumlar.length + " oturum açık"
         : (durum.izleme_duraklatildi ? "İzleme duraklatıldı" : "İzleme aktif");
     }
+
+    if (durum.pomodoro) pomodoroUygula(durum.pomodoro);
+  }
+
+  // ------------------------------------------------------------- Pomodoro
+  function pomodoroUygula(p) {
+    var kart = document.getElementById("pomodoro-kart");
+    if (!kart) return;
+
+    var oncekiAktif = kart.dataset.aktif === "1";
+    var oncekiAsama = kart.dataset.asama;
+    kart.dataset.aktif = p.aktif ? "1" : "0";
+    kart.dataset.kalan = String(p.kalan_saniye);
+    kart.dataset.asama = p.asama;
+    kart.classList.toggle("mola", p.aktif && p.asama === "mola");
+
+    metniAyarla("pomodoro-asama", p.aktif ? p.asama_metni : "Kapalı");
+    metniAyarla("pomodoro-tur", p.aktif ? (p.tur + 1) + ". tur" : "");
+    pomodoroSayaciCiz();
+
+    // Aşama değiştiyse butonlar da değişmeli.
+    if (oncekiAktif !== p.aktif || oncekiAsama !== p.asama) {
+      var butonlar = kart.querySelector(".btn-satiri");
+      if (butonlar) {
+        butonlar.innerHTML = p.aktif
+          ? '<button type="button" class="btn btn-kucuk" data-pomodoro="atla">Aşamayı atla</button>' +
+            '<button type="button" class="btn btn-kucuk" data-pomodoro="durdur">Durdur</button>'
+          : '<button type="button" class="btn btn-ana btn-kucuk" data-pomodoro="baslat">Başlat</button>';
+      }
+    }
+  }
+
+  function pomodoroSayaciCiz() {
+    var kart = document.getElementById("pomodoro-kart");
+    var sayac = document.getElementById("pomodoro-sayac");
+    if (!kart || !sayac) return;
+    var kalan = Math.max(0, parseInt(kart.dataset.kalan || "0", 10));
+    var dk = String(Math.floor(kalan / 60)).padStart(2, "0");
+    var sn = String(kalan % 60).padStart(2, "0");
+    sayac.textContent = dk + ":" + sn;
+  }
+
+  function pomodoroTikla() {
+    var kart = document.getElementById("pomodoro-kart");
+    if (!kart || kart.dataset.aktif !== "1") return;
+    var kalan = Math.max(0, parseInt(kart.dataset.kalan || "0", 10) - 1);
+    kart.dataset.kalan = String(kalan);
+    pomodoroSayaciCiz();
+  }
+
+  function pomodoroEylem(eylem) {
+    fetch("/api/pomodoro", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "X-Istek-Turu": "json" },
+      body: JSON.stringify({ eylem: eylem }),
+    })
+      .then(function (y) { return y.json(); })
+      .then(function (sonuc) {
+        if (sonuc.pomodoro) pomodoroUygula(sonuc.pomodoro);
+      })
+      .catch(function () { toast("Pomodoro güncellenemedi.", "hata"); });
   }
 
   function cssKacis(metin) {
@@ -304,6 +365,11 @@
       return;
     }
 
+    if (hedef.dataset.pomodoro) {
+      pomodoroEylem(hedef.dataset.pomodoro);
+      return;
+    }
+
     if (hedef.dataset.kopyala) {
       var kaynak = document.getElementById(hedef.dataset.kopyala);
       if (kaynak && navigator.clipboard) {
@@ -322,13 +388,86 @@
     }
   });
 
+  // Renk seçici gibi alanlar değişince formu kendiliğinden gönder.
+  document.addEventListener("change", function (olay) {
+    var form = olay.target.form;
+    if (form && form.hasAttribute("data-oto-gonder")) {
+      formuGonder(form);
+    }
+  });
+
+  // -------------------------------------------------------- Klavye kısayolları
+  var KISAYOLLAR = {
+    p: { yol: "/", ad: "Panel" },
+    i: { yol: "/heatmap", ad: "Isı haritası" },
+    s: { yol: "/istatistikler", ad: "İstatistikler" },
+    y: { yol: "/yol-haritasi", ad: "Yol haritası" },
+    g: { yol: "/gecmis", ad: "Geçmiş" },
+    h: { yol: "/hedefler", ad: "Hedefler" },
+    a: { yol: "/ayarlar", ad: "Ayarlar" },
+  };
+
+  function yazmaAlanindaMi(oge) {
+    if (!oge) return false;
+    var etiket = oge.tagName;
+    return etiket === "INPUT" || etiket === "TEXTAREA" || etiket === "SELECT" ||
+      oge.isContentEditable;
+  }
+
+  function kisayollariKur() {
+    document.addEventListener("keydown", function (olay) {
+      if (olay.ctrlKey || olay.metaKey || olay.altKey) return;
+      if (yazmaAlanindaMi(olay.target)) return;
+
+      var tus = olay.key.toLowerCase();
+
+      // Boşluk: ilk aktif oturumu durdur, yoksa ilk kategoriyi başlat.
+      if (tus === " " || olay.code === "Space") {
+        var durdurForm = document.querySelector('#aktif-oturumlar form[action$="/oturum/durdur"]');
+        var baslatForm = document.querySelector('form[action$="/oturum/baslat"]');
+        if (durdurForm) {
+          olay.preventDefault();
+          formuGonder(durdurForm);
+        } else if (baslatForm) {
+          olay.preventDefault();
+          formuGonder(baslatForm);
+        }
+        return;
+      }
+
+      if (tus === "?") {
+        olay.preventDefault();
+        kisayolYardimiGoster();
+        return;
+      }
+
+      var hedef = KISAYOLLAR[tus];
+      if (hedef) {
+        olay.preventDefault();
+        window.location.href = hedef.yol;
+      }
+    });
+  }
+
+  function kisayolYardimiGoster() {
+    var satirlar = Object.keys(KISAYOLLAR).map(function (t) {
+      return t.toUpperCase() + " → " + KISAYOLLAR[t].ad;
+    });
+    satirlar.unshift("Boşluk → oturum başlat/durdur");
+    toast(satirlar.join(" · "));
+  }
+
   // ------------------------------------------------------------- Başlangıç
   document.addEventListener("DOMContentLoaded", function () {
     sihirbaziKur();
     sayaclariCiz();
+    pomodoroSayaciCiz();
+
+    if (!document.querySelector(".sihirbaz")) kisayollariKur();
 
     if (document.getElementById("aktif-oturumlar")) {
       setInterval(sayaclariTikla, 1000);
+      setInterval(pomodoroTikla, 1000);
       setInterval(durumuYokla, YOKLAMA_MS);
       durumuYokla();
     }

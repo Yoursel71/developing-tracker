@@ -5,7 +5,7 @@ import io
 import json
 
 from depo import json_deposu
-from servisler import yol_haritasi
+from servisler import kategoriler, yol_haritasi
 
 
 def kurulum_tamamlandi_mi():
@@ -19,6 +19,8 @@ def izleme_ayarlarini_getir():
 def kurulumu_kaydet(haftalik_saat, toplam_hedef_saat, github_kullanici,
                     editorler, siteler, yol_haritasi_ekle=True):
     with json_deposu.guncelle() as veri:
+        if not veri["kategoriler"]:
+            veri["kategoriler"] = kategoriler.varsayilan_kategoriler()
         veri["hedefler"]["haftalik_saat"] = haftalik_saat
         veri["github"]["kullanici"] = github_kullanici
         veri["izleme"]["editorler"] = editorler

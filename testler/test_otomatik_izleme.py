@@ -236,7 +236,11 @@ def test_uyku_bosluğu_sureye_eklenmez(izlemeli_veri):
 
 def test_acilis_kurtarmasi_hayalet_oturumu_kapatir(izlemeli_veri):
     """Cuma çöken uygulama, Pazartesi 63 saatlik sahte oturum yazmamalı."""
-    eski = zaman_takibi.simdi() - dt.timedelta(days=3)
+    # Gün ortasına sabitle: gece yarısına yakın çalıştırılırsa oturum
+    # (doğru şekilde) iki güne bölünür ve bu testin konusu o değil.
+    eski = (zaman_takibi.simdi() - dt.timedelta(days=3)).replace(
+        hour=10, minute=0, second=0, microsecond=0
+    )
     with json_deposu.guncelle() as veri:
         veri["aktif_oturumlar"]["Python"] = {
             "baslangic": eski.isoformat(timespec="seconds"),
@@ -257,7 +261,9 @@ def test_acilis_kurtarmasi_hayalet_oturumu_kapatir(izlemeli_veri):
 
 def test_acilis_kurtarmasi_manuel_oturumu_da_kapatir(izlemeli_veri):
     """Manuel oturumlar sonsuza kadar açık kalıyordu."""
-    eski = zaman_takibi.simdi() - dt.timedelta(days=7)
+    eski = (zaman_takibi.simdi() - dt.timedelta(days=7)).replace(
+        hour=10, minute=0, second=0, microsecond=0
+    )
     with json_deposu.guncelle() as veri:
         veri["aktif_oturumlar"]["Diğer"] = {
             "baslangic": eski.isoformat(timespec="seconds"),

@@ -11,6 +11,70 @@
 </div>
 
 <div class="kart">
+  <div class="kart-basligi"><h2>Kategoriler ve projeler</h2></div>
+  <p style="font-size: var(--olcek-sm); color: var(--metin-2); margin-bottom: var(--bosluk-4)">
+    Kendi projelerini ekleyebilirsin. Bir kategoriyi yeniden adlandırırsan
+    geçmiş oturumların da otomatik güncellenir.
+  </p>
+
+  <div class="tablo-sarmal" style="margin-bottom: var(--bosluk-4)">
+    <table>
+      <thead>
+        <tr><th style="width:36px"></th><th>Ad</th><th class="sayisal">Oturum</th><th></th></tr>
+      </thead>
+      <tbody>
+        {% for k in kategori_kayitlari %}
+          <tr>
+            <td>
+              <form method="post" action="{{ url_for('kategori_guncelle', kategori_id=k.id) }}"
+                    data-ajax data-oto-gonder>
+                <input type="color" name="renk" value="{{ k.renk }}"
+                       aria-label="{{ k.ad }} rengi"
+                       style="width:26px;height:26px;padding:0;border:none;background:none;cursor:pointer">
+              </form>
+            </td>
+            <td>
+              <form method="post" action="{{ url_for('kategori_guncelle', kategori_id=k.id) }}"
+                    data-ajax class="btn-satiri">
+                <input type="text" name="ad" value="{{ k.ad }}" maxlength="40"
+                       aria-label="Kategori adı" style="margin-top:0">
+                <button type="submit" class="btn btn-kucuk">Kaydet</button>
+              </form>
+            </td>
+            <td class="sayisal" style="color: var(--metin-2)">
+              {{ kategori_kullanimi.get(k.ad, 0) }}
+            </td>
+            <td>
+              {% if kategori_kayitlari | length > 1 %}
+                <form method="post" action="{{ url_for('kategori_sil', kategori_id=k.id) }}"
+                      data-ajax class="btn-satiri"
+                      data-onay="'{{ k.ad }}' silinecek. Emin misin?">
+                  {% if kategori_kullanimi.get(k.ad, 0) %}
+                    <select name="tasima_hedefi" aria-label="Oturumlar nereye taşınsın"
+                            style="margin-top:0;width:auto">
+                      {% for d in kategori_kayitlari if d.id != k.id %}
+                        <option value="{{ d.ad }}">→ {{ d.ad }}</option>
+                      {% endfor %}
+                    </select>
+                  {% endif %}
+                  <button type="submit" class="btn btn-tehlike btn-kucuk">Sil</button>
+                </form>
+              {% endif %}
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <form method="post" action="{{ url_for('kategori_ekle') }}" data-ajax class="btn-satiri">
+    <input type="text" name="ad" placeholder="Yeni kategori / proje adı" maxlength="40"
+           aria-label="Yeni kategori adı" style="margin-top:0;max-width:280px">
+    <button type="submit" class="btn btn-ana">+ Ekle</button>
+  </form>
+</div>
+
+<div class="kart">
   <div class="kart-basligi"><h2>Otomatik takip</h2></div>
   <form method="post" action="{{ url_for('ayarlar_sayfasi') }}">
     <input type="hidden" name="bolum" value="izleme">
@@ -108,7 +172,37 @@
       <label class="onay">
         <input type="checkbox" name="bildirimler_acik" value="1" {{ 'checked' if ayarlar.bildirimler_acik }}>
         <span>Hatırlatma bildirimleri gönder
-          <span class="aciklama">Hafta ortası ilerleme, seri riski ve hafta sonu hedef uyarısı.</span>
+          <span class="aciklama">Pazar özeti, hafta ortası ilerleme, seri riski ve hafta sonu uyarısı.</span>
+        </span>
+      </label>
+    </div>
+
+    <div class="alan">
+      <label class="onay">
+        <input type="checkbox" name="mola_hatirlatici" value="1" {{ 'checked' if ayarlar.mola_hatirlatici }}>
+        <span>Mola hatırlatıcısı
+          <span class="aciklama">{{ config.MOLA_ONERI_DAKIKA // 60 }} saatten uzun kesintisiz çalışırsan mola öner.</span>
+        </span>
+      </label>
+    </div>
+
+    <div class="alan">
+      <label class="onay">
+        <input type="checkbox" name="pomodoro_acik" value="1" {{ 'checked' if ayarlar.pomodoro_acik }}>
+        <span>Pomodoro zamanlayıcısını göster
+          <span class="aciklama">
+            {{ config.POMODORO_CALISMA_DAKIKA }} dk çalış / {{ config.POMODORO_KISA_MOLA_DAKIKA }} dk mola ritmi.
+            Süre ölçümünü değiştirmez, yalnızca ritim tutar.
+          </span>
+        </span>
+      </label>
+    </div>
+
+    <div class="alan">
+      <label class="onay">
+        <input type="checkbox" name="motivasyon_sozu" value="1" {{ 'checked' if ayarlar.motivasyon_sozu }}>
+        <span>Panelde günün sözünü göster
+          <span class="aciklama">Gün içinde sabit kalır.</span>
         </span>
       </label>
     </div>
@@ -144,6 +238,7 @@
   <div class="btn-satiri" style="margin-bottom: var(--bosluk-4)">
     <a href="{{ url_for('disa_aktar_csv') }}" class="btn">CSV indir</a>
     <a href="{{ url_for('disa_aktar_json') }}" class="btn">JSON yedek indir</a>
+    <a href="{{ url_for('rapor_sayfasi') }}" class="btn">Yazdırılabilir rapor</a>
   </div>
 
   {% if yedekler %}

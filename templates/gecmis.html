@@ -61,6 +61,7 @@
                 {% if o.baslangic %}{{ o.baslangic[:5] }}–{{ o.bitis[:5] }}{% else %}—{% endif %}
               </td>
               <td>
+                <span class="kategori-noktasi" style="background: {{ renkler.get(o.kategori, '#6e7d8d') }}"></span>
                 {{ o.kategori }}
                 {% if o.kaynak == 'otomatik' %}<span class="rozet rozet-otomatik">oto</span>{% endif %}
                 {% if o.duzenlendi %}<span class="rozet rozet-duzenlendi">düzenlendi</span>{% endif %}

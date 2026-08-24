@@ -5,7 +5,7 @@ Windows masaüstü uygulaması. Kod yazdığın programı ya da kurs siteni
 açtığında zamanlayıcı kendiliğinden başlar, klavyeden elini çektiğinde
 duraklar, kapattığında durur.
 
-![Panel](https://img.shields.io/badge/arayüz-koyu%20tema-1f6feb) ![Test](https://img.shields.io/badge/test-157%20passing-3fb950)
+![Panel](https://img.shields.io/badge/arayüz-koyu%20tema-1f6feb) ![Test](https://img.shields.io/badge/test-212%20passing-3fb950)
 
 ## Ne yapar
 
@@ -24,6 +24,21 @@ duraklar, kapattığında durur.
 - **Öğrenme yol haritası** — her biri tahmini saatli konular; toplam hedef
   bunlardan hesaplanır ve "sıradaki konuyu ~3 günde bitirirsin" der.
 - **Oturum notları ve düzenleme** — yanlış kaydı düzelt, sil veya elle ekle.
+- **Kendi projelerin** — kategoriler sabit değil; "LocalRun", "BruceButBetter"
+  gibi kendi projelerini ekleyip renk verebilirsin. Yeniden adlandırma geçmiş
+  kayıtlara da yansır.
+- **Hafta karşılaştırması** — bu hafta vs geçen haftanın *aynı gününe kadarki*
+  hâli; Salı günü tam bir haftayla kıyaslamak yanıltıcı olurdu.
+- **Hedef geçmişi** — hangi haftalarda hedefi tutturdun. Her hafta o günkü
+  hedefiyle saklanır, sonradan hedef değişince geçmiş çarpıtılmaz.
+- **Mola hatırlatıcısı** — 2 saatten uzun kesintisiz çalışırsan mola önerir.
+- **Pomodoro** (isteğe bağlı) — 25/5 ritmi. Süre ölçümünü **değiştirmez**,
+  yalnızca ritim tutar; ölçüm her zaman otomatik takibin işidir.
+- **Yıl özeti** — "wrapped" tarzı yıllık bakış + indirilebilir rozetler.
+  Rozetler bilgisayarında üretilir, hiçbir yere gönderilmez.
+- **Yazdırılabilir rapor** — tarayıcıdan PDF olarak kaydedilebilir özet.
+- **Klavye kısayolları** — `Boşluk` başlat/durdur, `P/I/S/Y/G/H/A` sayfalar,
+  `?` yardım.
 
 ## Kurulum (Windows)
 

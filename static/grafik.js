@@ -99,7 +99,7 @@
   }
 
   /* ------------------------------------------------------- Çubuk grafiği */
-  function cubukCiz(kap, veri, etiketAl, degerAl, aciklama) {
+  function cubukCiz(kap, veri, etiketAl, degerAl, aciklama, vurguAl) {
     if (!veri.length) return;
 
     var G = 600, Y = 140, ust = 8, alt = 20;
@@ -118,10 +118,11 @@
       var yukseklik = Math.max((cizimY * deger) / enBuyuk, deger > 0 ? 2 : 0);
       var x = i * (genislik + bosluk);
 
+      var vurgulu = typeof vurguAl === "function" && vurguAl(d);
       var cubuk = ogeYap("rect", {
         x: x.toFixed(1), y: (ust + cizimY - yukseklik).toFixed(1),
         width: genislik.toFixed(1), height: yukseklik.toFixed(1),
-        rx: 2, class: "cubuk",
+        rx: 2, class: vurgulu ? "cubuk vurgulu" : "cubuk",
       });
       var baslik = ogeYap("title");
       baslik.textContent = etiketAl(d) + ": " + sureMetni(deger);
@@ -163,6 +164,23 @@
         function (d) { return String(d.saat).padStart(2, "0"); },
         function (d) { return d.dakika; },
         "Gün içi saatlere göre çalışma dağılımı");
+    }
+
+    var hafta = document.getElementById("hafta-grafik");
+    if (hafta) {
+      cubukCiz(hafta, veriOku(hafta),
+        function (d) { return d.etiket; },
+        function (d) { return d.dakika; },
+        "Son 8 haftanın toplam çalışma süresi",
+        function (d) { return d.bu_hafta; });
+    }
+
+    var ay = document.getElementById("ay-grafik");
+    if (ay) {
+      cubukCiz(ay, veriOku(ay),
+        function (d) { return d.etiket; },
+        function (d) { return d.dakika; },
+        "Aylara göre çalışma süresi");
     }
   });
 })();

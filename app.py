@@ -14,13 +14,17 @@ from platform_katmani import bosta, yollar
 from servisler import (
     api_anahtari,
     dogrulama,
+    kategoriler as kategori_servisi,
     github_entegrasyon,
     gunlukleme,
+    hedef_gecmisi,
     heatmap,
     hedefler,
     istatistikler,
     izleme_ayarlari,
     otomatik_izleme,
+    pomodoro,
+    yil_ozeti,
     yol_haritasi,
     zaman_takibi,
 )
@@ -162,7 +166,7 @@ def kurulum_sayfasi():
         izleme=veri["izleme"],
         bilinen_editorler=config.BILINEN_EDITORLER,
         bilinen_siteler=config.BILINEN_SITELER,
-        kategoriler=config.KATEGORILER,
+        kategoriler=config.VARSAYILAN_KATEGORILER,
         yol_haritasi_taslak=config.VARSAYILAN_YOL_HARITASI,
     )
 
@@ -191,6 +195,9 @@ def ayarlar_sayfasi():
                 tepsiye_indir=request.form.get("tepsiye_indir") == "1",
                 bildirimler_acik=request.form.get("bildirimler_acik") == "1",
                 windows_ile_baslat=request.form.get("windows_ile_baslat") == "1",
+                mola_hatirlatici=request.form.get("mola_hatirlatici") == "1",
+                pomodoro_acik=request.form.get("pomodoro_acik") == "1",
+                motivasyon_sozu=request.form.get("motivasyon_sozu") == "1",
             )
             _windows_baslangicini_uygula(request.form.get("windows_ile_baslat") == "1")
             return _basari_yanit("Tercihler kaydedildi.", url_for("ayarlar_sayfasi"))
@@ -206,12 +213,44 @@ def ayarlar_sayfasi():
         izleme=veri["izleme"],
         bilinen_editorler=config.BILINEN_EDITORLER,
         bilinen_siteler=config.BILINEN_SITELER,
-        kategoriler=config.KATEGORILER,
+        kategoriler=kategori_servisi.adlar(veri),
+        kategori_kayitlari=kategori_servisi.listele(veri),
+        kategori_kullanimi=kategori_servisi.kullanim_sayilari(veri),
         api_anahtari=api_anahtari.anahtari_al(),
         yedekler=json_deposu.yedekleri_listele(),
         veri_dizini=yollar.veri_dizini(),
         bosta_destekleniyor=bosta.destekleniyor_mu(),
     )
+
+
+@app.route("/kategori/ekle", methods=["POST"])
+def kategori_ekle():
+    try:
+        yeni = kategori_servisi.ekle(request.form.get("ad"), request.form.get("renk") or None)
+    except ValueError as hata:
+        return _hata_yanit(str(hata), 400)
+    return _basari_yanit(f"'{yeni['ad']}' eklendi.", url_for("ayarlar_sayfasi"))
+
+
+@app.route("/kategori/<kategori_id>/guncelle", methods=["POST"])
+def kategori_guncelle(kategori_id):
+    try:
+        if request.form.get("ad") is not None:
+            kategori_servisi.yeniden_adlandir(kategori_id, request.form.get("ad"))
+        if request.form.get("renk"):
+            kategori_servisi.rengi_degistir(kategori_id, request.form.get("renk"))
+    except ValueError as hata:
+        return _hata_yanit(str(hata), 400)
+    return _basari_yanit("Kategori güncellendi.", url_for("ayarlar_sayfasi"))
+
+
+@app.route("/kategori/<kategori_id>/sil", methods=["POST"])
+def kategori_sil(kategori_id):
+    try:
+        kategori_servisi.sil(kategori_id, request.form.get("tasima_hedefi") or None)
+    except ValueError as hata:
+        return _hata_yanit(str(hata), 400)
+    return _basari_yanit("Kategori silindi.", url_for("ayarlar_sayfasi"))
 
 
 def _windows_baslangicini_uygula(acik):
@@ -239,15 +278,27 @@ def panel():
     return render_template(
         "panel.html",
         aktif_oturumlar=_aktif_oturum_gorunumu(veri),
-        baslatilabilir=[k for k in config.KATEGORILER if k not in veri["aktif_oturumlar"]],
+        baslatilabilir=[k for k in kategori_servisi.adlar(veri) if k not in veri["aktif_oturumlar"]],
         bugun_dakika=seri["bugun_dakika"],
         seri=seri,
         haftalik=hedefler.haftalik_ilerleme(veri),
         mini_heatmap=heatmap.mini_grid(oturumlar, etkinlikler, hafta_sayisi=13),
         yol_ozeti=yol_haritasi.ozet(veri, tempo),
         son_oturumlar=_son_oturumlar(oturumlar, 8),
+        renkler=kategori_servisi.renk_haritasi(veri),
+        pomodoro_durumu=pomodoro.durum(veri),
+        pomodoro_acik=veri["ayarlar"].get("pomodoro_acik", False),
+        motivasyon=_motivasyon_sozu(veri),
         veri_var=bool(oturumlar),
     )
+
+
+def _motivasyon_sozu(veri):
+    """Varsayılan olarak kapalı; açıksa gün içinde sabit kalır."""
+    if not veri["ayarlar"].get("motivasyon_sozu"):
+        return None
+    bugun = dt.date.today()
+    return config.MOTIVASYON_SOZLERI[bugun.toordinal() % len(config.MOTIVASYON_SOZLERI)]
 
 
 def _son_oturumlar(oturumlar, adet):
@@ -372,12 +423,15 @@ def istatistikler_sayfasi():
     github_entegrasyon.arka_planda_senkronize_et()
     veri = json_deposu.oku()
     etkinlikler = veri["github"]["son_cekilen_etkinlikler"]
+    hedef_gecmisi.gecmisi_guncelle()
+    veri = json_deposu.oku()
     return render_template(
         "istatistikler.html",
         istatistik=istatistikler.istatistikleri_hesapla(veri),
         repolar=github_entegrasyon.repo_ozeti(etkinlikler),
         github_hatasi=github_entegrasyon.son_hata(),
         github_kullanici=veri["github"]["kullanici"],
+        renkler=kategori_servisi.renk_haritasi(veri),
     )
 
 
@@ -438,6 +492,7 @@ def yol_tas_durumu(tas_id):
 
 @app.route("/hedefler", methods=["GET", "POST"])
 def hedefler_sayfasi():
+    hedef_gecmisi.gecmisi_guncelle()
     if request.method == "POST":
         haftalik, toplam = dogrulama.hedefleri_dogrula(
             request.form.get("haftalik_saat"), request.form.get("toplam_hedef_saat")
@@ -457,6 +512,8 @@ def hedefler_sayfasi():
             veri["hedefler"]["haftalik_saat"],
         ),
         yol_ozeti=yol_haritasi.ozet(veri, tempo),
+        gecmis=hedef_gecmisi.listele(veri),
+        gecmis_ozeti=hedef_gecmisi.ozet(veri),
     )
 
 
@@ -469,8 +526,55 @@ def gecmis_sayfasi():
         veri["oturumlar"], key=lambda o: (o.get("tarih", ""), o.get("bitis", "")), reverse=True
     )
     return render_template(
-        "gecmis.html", oturumlar=oturumlar[:300], kategoriler=config.KATEGORILER,
+        "gecmis.html", oturumlar=oturumlar[:300], kategoriler=kategori_servisi.adlar(veri),
+        renkler=kategori_servisi.renk_haritasi(veri),
         toplam=len(oturumlar),
+    )
+
+
+@app.route("/yil-ozeti")
+def yil_ozeti_sayfasi():
+    veri = json_deposu.oku()
+    try:
+        yil = int(request.args.get("yil") or dt.date.today().year)
+    except (TypeError, ValueError):
+        yil = dt.date.today().year
+
+    return render_template(
+        "yil_ozeti.html",
+        ozet=yil_ozeti.ozet(veri, yil),
+        yillar=yil_ozeti.kullanilabilir_yillar(veri["oturumlar"]),
+        renkler=kategori_servisi.renk_haritasi(veri),
+        rozetler=yil_ozeti.rozet_secenekleri(veri),
+    )
+
+
+@app.route("/rozet/<anahtar>.svg")
+def rozet(anahtar):
+    """Yerel rozet üreteci — hiçbir yere yayınlanmaz, kullanıcı indirir."""
+    try:
+        svg = yil_ozeti.rozet_uret(json_deposu.oku(), anahtar)
+    except ValueError:
+        return _hata_yanit("Bilinmeyen rozet türü.", 404)
+    return Response(svg, mimetype="image/svg+xml",
+                    headers={"Cache-Control": "no-store"})
+
+
+@app.route("/rapor")
+def rapor_sayfasi():
+    """Yazdırılabilir özet (tarayıcıdan PDF'e aktarılabilir)."""
+    hedef_gecmisi.gecmisi_guncelle()
+    veri = json_deposu.oku()
+    tempo = istatistikler.tempo_hesapla(veri["oturumlar"])
+    return render_template(
+        "rapor.html",
+        istatistik=istatistikler.istatistikleri_hesapla(veri),
+        haftalik=hedefler.haftalik_ilerleme(veri),
+        yol_ozeti=yol_haritasi.ozet(veri, tempo),
+        yol=sorted(veri["yol_haritasi"], key=lambda t: t.get("sira", 0)),
+        gecmis=hedef_gecmisi.listele(veri, limit=8),
+        renkler=kategori_servisi.renk_haritasi(veri),
+        uretim_tarihi=dt.date.today().isoformat(),
     )
 
 
@@ -525,13 +629,29 @@ def api_durum():
     seri = istatistikler.seri_hesapla(veri["oturumlar"], veri["ayarlar"].get("seri_esigi_dakika"))
     return jsonify({
         "aktif_oturumlar": _aktif_oturum_gorunumu(veri),
-        "baslatilabilir": [k for k in config.KATEGORILER if k not in veri["aktif_oturumlar"]],
+        "baslatilabilir": [k for k in kategori_servisi.adlar(veri) if k not in veri["aktif_oturumlar"]],
         "bugun_dakika": seri["bugun_dakika"],
         "seri": seri,
         "haftalik": hedefler.haftalik_ilerleme(veri),
         "izleme_duraklatildi": otomatik_izleme.duraklatildi_mi(),
+        "pomodoro": pomodoro.durum(veri),
         "sunucu_zamani": zaman_takibi.simdi().isoformat(),
     })
+
+
+@app.route("/api/pomodoro", methods=["POST"])
+def api_pomodoro():
+    govde = request.json or request.form or {}
+    eylem = govde.get("eylem")
+    if eylem == "baslat":
+        pomodoro.baslat()
+    elif eylem == "durdur":
+        pomodoro.durdur()
+    elif eylem == "atla":
+        pomodoro.atla()
+    else:
+        return _hata_yanit("Bilinmeyen pomodoro eylemi.", 400)
+    return jsonify({"tamam": True, "pomodoro": pomodoro.durum()})
 
 
 @app.route("/api/izleme/duraklat", methods=["POST"])
@@ -573,7 +693,7 @@ def api_site_durumu():
     durum = gelen.get("durum")
     if not kategori or durum not in ("acik", "kapandi"):
         return _eklenti_yaniti({"tamam": False, "hata": "Geçersiz istek"}, 400)
-    if kategori not in config.KATEGORILER:
+    if not kategori_servisi.gecerli_mi(kategori):
         return _eklenti_yaniti({"tamam": False, "hata": "Bilinmeyen kategori"}, 400)
     otomatik_izleme.site_durumu_bildir(kategori, durum)
     return _eklenti_yaniti({"tamam": True})

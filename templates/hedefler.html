@@ -51,6 +51,41 @@
 {% endif %}
 
 <div class="kart" style="margin-top: var(--bosluk-4)">
+  <div class="kart-basligi">
+    <h2>Hedef geçmişi</h2>
+    {% if gecmis_ozeti.toplam %}
+      <span style="font-size: var(--olcek-sm); color: var(--metin-2)">
+        {{ gecmis_ozeti.toplam }} haftanın {{ gecmis_ozeti.basarili }}'inde hedefi tutturdun
+        (%{{ gecmis_ozeti.oran | round(0) | int }})
+      </span>
+    {% endif %}
+  </div>
+
+  {% if gecmis | length > 1 %}
+    {% for h in gecmis %}
+      <div class="gecmis-satiri">
+        <span class="gecmis-isaret" aria-hidden="true">
+          {% if h.devam_ediyor %}⏳{% elif h.basarili %}✅{% else %}—{% endif %}
+        </span>
+        <span class="gecmis-etiket">{{ h.etiket }}</span>
+        <div class="gecmis-cubuk">
+          <div class="gecmis-dolgu {{ '' if h.basarili else 'basarisiz' }}"
+               style="width: {{ [h.yuzde, 100] | min }}%"></div>
+        </div>
+        <span class="gecmis-deger">
+          {{ h.saat }} / {{ h.hedef_saat }} s
+          {%- if h.devam_ediyor %} (sürüyor){% endif %}
+        </span>
+      </div>
+    {% endfor %}
+  {% else %}
+    <p style="color: var(--metin-2); font-size: var(--olcek-sm)">
+      İlk haftan tamamlandığında geçmiş burada birikmeye başlayacak.
+    </p>
+  {% endif %}
+</div>
+
+<div class="kart">
   <div class="kart-basligi"><h2>Hedefleri düzenle</h2></div>
   <form method="post" action="{{ url_for('hedefler_sayfasi') }}">
     <div class="alan-satiri">

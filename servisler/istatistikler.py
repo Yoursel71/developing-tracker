@@ -186,6 +186,86 @@ def en_cok_calisilan_gun(oturumlar):
     return {"tarih": gun.isoformat(), "dakika": round(toplamlar[gun], 1)}
 
 
+def en_uzun_oturum(oturumlar):
+    """Tek seferde yapılan en uzun çalışma."""
+    gecerli = [o for o in oturumlar if o.get("sure_dakika")]
+    if not gecerli:
+        return None
+    en_iyi = max(gecerli, key=lambda o: o.get("sure_dakika", 0))
+    return {
+        "tarih": en_iyi.get("tarih", ""),
+        "kategori": en_iyi.get("kategori", ""),
+        "dakika": round(en_iyi.get("sure_dakika", 0), 1),
+        "baslangic": en_iyi.get("baslangic", ""),
+    }
+
+
+def _hafta_araligi(hafta_basi):
+    return hafta_basi, hafta_basi + dt.timedelta(days=6)
+
+
+def _aralik_toplami(oturumlar, baslangic, bitis):
+    toplam = 0.0
+    for oturum in oturumlar:
+        gun = _tarih(oturum)
+        if gun and baslangic <= gun <= bitis:
+            toplam += oturum.get("sure_dakika", 0)
+    return toplam
+
+
+def hafta_karsilastirmasi(oturumlar, bugun=None):
+    """Bu hafta ile geçen haftanın karşılaştırması.
+
+    Adil olması için geçen haftanın **aynı gününe kadarki** kısmı da ayrıca
+    hesaplanır; Salı günü tam bir haftayla kıyaslamak yanıltıcı olurdu.
+    """
+    bugun = bugun or dt.date.today()
+    bu_hafta_basi = bugun - dt.timedelta(days=bugun.weekday())
+    gecen_hafta_basi = bu_hafta_basi - dt.timedelta(days=7)
+
+    bu_hafta = _aralik_toplami(oturumlar, *_hafta_araligi(bu_hafta_basi))
+    gecen_hafta = _aralik_toplami(oturumlar, *_hafta_araligi(gecen_hafta_basi))
+    gecen_hafta_ayni_gun = _aralik_toplami(
+        oturumlar, gecen_hafta_basi, gecen_hafta_basi + dt.timedelta(days=bugun.weekday())
+    )
+
+    if gecen_hafta_ayni_gun > 0:
+        degisim = (bu_hafta - gecen_hafta_ayni_gun) / gecen_hafta_ayni_gun * 100
+    else:
+        degisim = None
+
+    return {
+        "bu_hafta_dakika": round(bu_hafta, 1),
+        "bu_hafta_saat": round(bu_hafta / 60, 1),
+        "gecen_hafta_dakika": round(gecen_hafta, 1),
+        "gecen_hafta_saat": round(gecen_hafta / 60, 1),
+        "gecen_hafta_ayni_gun_dakika": round(gecen_hafta_ayni_gun, 1),
+        "gecen_hafta_ayni_gun_saat": round(gecen_hafta_ayni_gun / 60, 1),
+        "degisim_yuzde": round(degisim, 1) if degisim is not None else None,
+        "yonu": ("artis" if degisim > 0 else "azalis" if degisim < 0 else "ayni")
+                if degisim is not None else "veri_yok",
+        "bu_hafta_basi": bu_hafta_basi.isoformat(),
+        "gecen_hafta_basi": gecen_hafta_basi.isoformat(),
+    }
+
+
+def son_haftalar(oturumlar, hafta_sayisi=8, bugun=None):
+    """Son N haftanın toplamları (grafik için)."""
+    bugun = bugun or dt.date.today()
+    bu_hafta_basi = bugun - dt.timedelta(days=bugun.weekday())
+    sonuc = []
+    for geri in range(hafta_sayisi - 1, -1, -1):
+        hafta_basi = bu_hafta_basi - dt.timedelta(weeks=geri)
+        toplam = _aralik_toplami(oturumlar, *_hafta_araligi(hafta_basi))
+        sonuc.append({
+            "hafta_basi": hafta_basi.isoformat(),
+            "etiket": hafta_basi.strftime("%d.%m"),
+            "dakika": round(toplam, 1),
+            "bu_hafta": hafta_basi == bu_hafta_basi,
+        })
+    return sonuc
+
+
 # --- Tahmin -----------------------------------------------------------------
 
 def _haftalik_toplamlar(oturumlar):
@@ -302,6 +382,9 @@ def istatistikleri_hesapla(veri, bugun=None):
         "calisilan_gun_ortalamasi": round(calisilan_gun_basina_ortalama(oturumlar), 1),
         "aktif_gun_sayisi": len([d for d in gunluk_toplamlar(oturumlar).values() if d > 0]),
         "en_cok_calisilan_gun": en_cok_calisilan_gun(oturumlar),
+        "en_uzun_oturum": en_uzun_oturum(oturumlar),
+        "hafta_karsilastirmasi": hafta_karsilastirmasi(oturumlar, bugun),
+        "son_haftalar": son_haftalar(oturumlar, 8, bugun),
         "kategori_dagilimi": kategori_dagilimi(oturumlar),
         "haftanin_gunleri": haftanin_gunleri_dagilimi(oturumlar),
         "saat_dagilimi": saat_dagilimi(oturumlar),

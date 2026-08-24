@@ -15,8 +15,6 @@ from depo import json_deposu
 
 logger = logging.getLogger(__name__)
 
-KATEGORILER = config.KATEGORILER
-
 
 def simdi():
     """Zaman dilimi bilgisi taşıyan şimdiki zaman.

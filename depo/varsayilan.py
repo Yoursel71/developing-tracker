@@ -1,8 +1,24 @@
 """Veri şemasının güncel sürümü ve varsayılan içeriği."""
 
+import uuid
+
 import config
 
-SEMA_SURUMU = 2
+SEMA_SURUMU = 3
+
+
+def _varsayilan_kategoriler():
+    """Kategoriler ilk dosya oluşturulurken hazır olmalı.
+
+    Kurulum sihirbazı girdileri kategori listesine karşı doğruluyor; liste
+    kurulum tamamlanınca oluşturulsaydı sihirbaz kendi seçeneklerini
+    reddederdi.
+    """
+    palet = config.KATEGORI_PALETI
+    return [
+        {"id": uuid.uuid4().hex, "ad": ad, "renk": palet[i % len(palet)], "sira": i}
+        for i, ad in enumerate(config.VARSAYILAN_KATEGORILER)
+    ]
 
 
 def varsayilan_veri():
@@ -11,6 +27,8 @@ def varsayilan_veri():
         "kurulum_tamamlandi": False,
         "oturumlar": [],
         "aktif_oturumlar": {},
+        "kategoriler": _varsayilan_kategoriler(),
+        "hedef_gecmisi": [],
         "hedefler": {
             "haftalik_saat": config.VARSAYILAN_HAFTALIK_HEDEF_SAAT,
             "toplam_hedef_saat": config.VARSAYILAN_TOPLAM_HEDEF_SAAT,
@@ -34,6 +52,15 @@ def varsayilan_veri():
             "tepsiye_indir": True,
             "windows_ile_baslat": False,
             "bildirimler_acik": True,
+            "mola_hatirlatici": True,
+            "motivasyon_sozu": False,
+            "pomodoro_acik": False,
+        },
+        "pomodoro": {
+            "aktif": False,
+            "asama": "calisma",
+            "baslangic": None,
+            "tur": 0,
         },
     }
 
@@ -64,6 +91,10 @@ def normallestir(veri):
         veri["aktif_oturumlar"] = {}
     if not isinstance(veri.get("yol_haritasi"), list):
         veri["yol_haritasi"] = []
+    if not isinstance(veri.get("kategoriler"), list) or not veri["kategoriler"]:
+        veri["kategoriler"] = _varsayilan_kategoriler()
+    if not isinstance(veri.get("hedef_gecmisi"), list):
+        veri["hedef_gecmisi"] = []
     for alan in ("editorler", "siteler"):
         if not isinstance(veri["izleme"].get(alan), list):
             veri["izleme"][alan] = []

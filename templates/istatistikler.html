@@ -106,16 +106,80 @@
 
   <div class="kart">
     <div class="kart-basligi"><h2>Kategori dağılımı</h2></div>
-    {% set toplam_dk = istatistik.kategori_dagilimi | sum(attribute='dakika') %}
     {% for k in istatistik.kategori_dagilimi %}
       <div class="dagilim-satiri">
-        <span class="dagilim-ad">{{ k.kategori }}</span>
+        <span class="dagilim-ad">
+          <span class="kategori-noktasi" style="background: {{ renkler.get(k.kategori, '#6e7d8d') }}"></span>
+          {{ k.kategori }}
+        </span>
         <div class="dagilim-cubuk">
-          <div class="dagilim-dolgu" style="width: {{ k.yuzde }}%; background: var(--yesil-{{ (loop.index0 % 4) + 1 }})"></div>
+          <div class="dagilim-dolgu"
+               style="width: {{ k.yuzde }}%; background: {{ renkler.get(k.kategori, '#6e7d8d') }}"></div>
         </div>
         <span class="dagilim-deger">{{ (k.dakika / 60) | round(1) }} s · %{{ k.yuzde | round(0) | int }}</span>
       </div>
     {% endfor %}
+  </div>
+</div>
+
+<div class="izgara izgara-2">
+  <div class="kart">
+    <div class="kart-basligi"><h2>Bu hafta vs geçen hafta</h2></div>
+    {% set h = istatistik.hafta_karsilastirmasi %}
+    <div class="izgara izgara-2" style="gap: var(--bosluk-3)">
+      <div>
+        <span class="metrik-etiket">Bu hafta</span>
+        <p class="metrik-deger">{{ h.bu_hafta_saat }}<span style="font-size:var(--olcek-md);color:var(--metin-3)"> s</span></p>
+      </div>
+      <div>
+        <span class="metrik-etiket">Geçen hafta (tamamı)</span>
+        <p class="metrik-deger" style="color: var(--metin-2)">{{ h.gecen_hafta_saat }}<span style="font-size:var(--olcek-md);color:var(--metin-3)"> s</span></p>
+      </div>
+    </div>
+
+    {% if h.degisim_yuzde is not none %}
+      <p style="margin-top: var(--bosluk-3); font-size: var(--olcek-sm)">
+        Geçen haftanın aynı gününe kadar {{ h.gecen_hafta_ayni_gun_saat }} saatteydin —
+        {% if h.yonu == 'artis' %}
+          <strong style="color: var(--vurgu)">%{{ h.degisim_yuzde | abs | round(0) | int }} önde</strong> 📈
+        {% elif h.yonu == 'azalis' %}
+          <strong style="color: var(--uyari)">%{{ h.degisim_yuzde | abs | round(0) | int }} geride</strong> 📉
+        {% else %}
+          <strong>aynı tempodasın</strong>
+        {% endif %}
+      </p>
+    {% else %}
+      <p style="margin-top: var(--bosluk-3); font-size: var(--olcek-sm); color: var(--metin-2)">
+        Geçen hafta bu güne kadar kayıt yok, karşılaştırma yapılamıyor.
+      </p>
+    {% endif %}
+
+    <div id="hafta-grafik" data-veri='{{ istatistik.son_haftalar | tojson }}' style="margin-top: var(--bosluk-4)"></div>
+  </div>
+
+  <div class="kart">
+    <div class="kart-basligi"><h2>Rekorlar</h2></div>
+    <div style="margin-bottom: var(--bosluk-4)">
+      <span class="metrik-etiket">En uzun tek oturum</span>
+      {% if istatistik.en_uzun_oturum %}
+        {% set u = istatistik.en_uzun_oturum %}
+        <p class="metrik-deger">{{ (u.dakika / 60) | round(1) }}<span style="font-size:var(--olcek-md);color:var(--metin-3)"> saat</span></p>
+        <p style="font-size: var(--olcek-sm); color: var(--metin-2)">
+          {{ u.tarih }} · {{ u.kategori }}{% if u.baslangic %} · {{ u.baslangic[:5] }}'te başladı{% endif %}
+        </p>
+      {% else %}
+        <p style="color: var(--metin-2)">Henüz veri yok.</p>
+      {% endif %}
+    </div>
+    <div>
+      <span class="metrik-etiket">En yoğun gün</span>
+      {% if istatistik.en_cok_calisilan_gun %}
+        <p class="metrik-deger">{{ (istatistik.en_cok_calisilan_gun.dakika / 60) | round(1) }}<span style="font-size:var(--olcek-md);color:var(--metin-3)"> saat</span></p>
+        <p style="font-size: var(--olcek-sm); color: var(--metin-2)">{{ istatistik.en_cok_calisilan_gun.tarih }}</p>
+      {% else %}
+        <p style="color: var(--metin-2)">Henüz veri yok.</p>
+      {% endif %}
+    </div>
   </div>
 </div>
 
@@ -145,16 +209,6 @@
 </div>
 
 <div class="izgara izgara-2">
-  <div class="kart">
-    <div class="kart-basligi"><h2>Rekor gün</h2></div>
-    {% if istatistik.en_cok_calisilan_gun %}
-      <p class="metrik-deger">{{ (istatistik.en_cok_calisilan_gun.dakika / 60) | round(1) }} saat</p>
-      <p style="color: var(--metin-2); font-size: var(--olcek-sm)">{{ istatistik.en_cok_calisilan_gun.tarih }}</p>
-    {% else %}
-      <p style="color: var(--metin-2)">Henüz veri yok.</p>
-    {% endif %}
-  </div>
-
   <div class="kart">
     <div class="kart-basligi"><h2>GitHub</h2></div>
     {% if repolar %}
