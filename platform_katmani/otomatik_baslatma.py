@@ -14,7 +14,7 @@ def destekleniyor_mu():
 
 
 def _komut():
-    return f'"{sys.executable}"'
+    return f'"{sys.executable}" --arkaplan'
 
 
 def ayarla(acik):

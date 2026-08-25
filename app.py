@@ -40,6 +40,10 @@ app = Flask(
 app.secret_key = api_anahtari.anahtari_al()
 app.jinja_env.globals["config"] = config
 
+# masaustu.py, pencereyi öne getiren geri çağrıyı buraya bağlar. Yalnızca
+# masaüstü kabuğunda dolu olur; tarayıcıdan çalıştırıldığında None kalır.
+pencere_ac_geri_cagri = None
+
 
 # --- Yardımcılar ------------------------------------------------------------
 
@@ -662,6 +666,21 @@ def api_izleme_duraklat():
         return jsonify({"tamam": True, "duraklatildi": False})
     otomatik_izleme.duraklat()
     return jsonify({"tamam": True, "duraklatildi": True})
+
+
+@app.route("/api/pencereyi-ac", methods=["POST"])
+def api_pencereyi_ac():
+    """.exe'ye ikinci kez tıklandığında ilk örneğin penceresini öne getirir.
+
+    Tek örnek kilidini alamayan ikinci süreç, bu uca istek atıp hemen çıkar;
+    yeni bir IPC mekanizması yazmaya gerek yok, sunucu zaten sabit portta.
+    """
+    sunulan = request.headers.get("X-Api-Anahtari") or request.args.get("anahtar")
+    if not api_anahtari.dogrula(sunulan):
+        return jsonify({"tamam": False, "hata": "Geçersiz API anahtarı"}), 403
+    if pencere_ac_geri_cagri is not None:
+        pencere_ac_geri_cagri()
+    return jsonify({"tamam": True})
 
 
 # --- Tarayıcı eklentisi API'si ---------------------------------------------

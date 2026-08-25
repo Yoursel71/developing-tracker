@@ -4,6 +4,7 @@ Flask arka planda bir thread'de çalışır, pencere pywebview ile ana thread'te
 açılır, tepsi ikonu ayrı bir thread'de durur.
 """
 
+import argparse
 import ctypes
 import logging
 import sys
@@ -14,13 +15,22 @@ import urllib.request
 import config
 from depo import json_deposu
 from platform_katmani import tek_ornek, tepsi
-from servisler import gunlukleme, otomatik_izleme, zaman_takibi
+from servisler import bildirim, gunlukleme, otomatik_izleme, zaman_takibi
 
 gunlukleme.kur()
 logger = logging.getLogger(__name__)
 
 _pencere = None
 _gercekten_kapan = False
+
+
+def _argumanlari_ayristir(argv):
+    ayristirici = argparse.ArgumentParser(description="Gelişim Takip masaüstü uygulaması")
+    ayristirici.add_argument(
+        "--arkaplan", action="store_true",
+        help="Pencereyi göstermeden, yalnızca tepside başlat (Windows açılışı için).",
+    )
+    return ayristirici.parse_args(argv)
 
 
 def _sunucuyu_baslat():
@@ -66,8 +76,24 @@ def _pencereyi_ac():
         _pencere.show()
         _pencere.restore()
         _one_getir()
+        _acilis_animasyonunu_tetikle()
     except Exception:
         logger.exception("Pencere gösterilemedi")
+
+
+def _acilis_animasyonunu_tetikle():
+    """Pencere gizliyken sayfa zaten yüklenmiştir; show() anında CSS
+    animasyonunu yeniden oynatmak için sınıfı JS ile tazeler."""
+    if _pencere is None:
+        return
+    try:
+        _pencere.evaluate_js(
+            "(function(){var e=document.querySelector('.kabuk');"
+            "if(!e)return;e.classList.remove('kabuk-canlanma');"
+            "void e.offsetWidth;e.classList.add('kabuk-canlanma');})();"
+        )
+    except Exception:
+        pass
 
 
 def _takibi_degistir():
@@ -128,11 +154,45 @@ def _gizle():
         logger.exception("Pencere gizlenemedi")
 
 
+def _calisan_ornegi_uyandir():
+    """Kilit alınamadığında, halihazırda çalışan örneğe pencereyi açtırır.
+
+    Yanıt vermezse (yalnızca kilit soketini tutan ama Flask'ı ölmüş bir süreç
+    gibi tutarsız bir durumda) True dönmez; kilit yine de başka bir sürece ait
+    olduğu için port zorla devralınmaz — bu, tek örnek kilidinin var oluş
+    sebebiyle (aynı veri.json'a çift yazım) çelişirdi.
+    """
+    from servisler import api_anahtari
+
+    try:
+        istek = urllib.request.Request(
+            f"http://127.0.0.1:{config.UYGULAMA_PORTU}/api/pencereyi-ac",
+            data=b"{}",
+            headers={
+                "Content-Type": "application/json",
+                "X-Api-Anahtari": api_anahtari.anahtari_al(),
+            },
+            method="POST",
+        )
+        with urllib.request.urlopen(istek, timeout=2) as yanit:
+            return yanit.status == 200
+    except Exception:
+        return False
+
+
 def calistir():
     global _pencere
 
+    args = _argumanlari_ayristir(sys.argv[1:])
+
     if not tek_ornek.kilidi_al():
-        logger.warning("Uygulama zaten çalışıyor; ikinci örnek kapatılıyor.")
+        if _calisan_ornegi_uyandir():
+            logger.info("Uygulama zaten çalışıyor; penceresi öne getirildi.")
+        else:
+            logger.warning(
+                "Uygulama zaten çalışıyor ama yanıt vermiyor; "
+                "görev yöneticisinden eski GelisimTakip.exe sürecini kontrol et."
+            )
         return 1
 
     import webview
@@ -145,12 +205,16 @@ def calistir():
     else:
         logger.error("Sunucu zamanında ayağa kalkmadı")
 
+    from app import app as flask_app
+    flask_app.pencere_ac_geri_cagri = _pencereyi_ac
+
     otomatik_izleme.baslat()
 
     _pencere = webview.create_window(
         "Gelişim Takip",
         f"http://127.0.0.1:{config.UYGULAMA_PORTU}/",
         width=1180, height=820, min_size=(760, 560),
+        hidden=args.arkaplan,
     )
     _pencere.events.closing += _pencere_kapanirken
 
@@ -160,6 +224,12 @@ def calistir():
         cikis_geri_cagri=_kapat,
         duraklatildi_mi=otomatik_izleme.duraklatildi_mi,
     )
+
+    if args.arkaplan:
+        bildirim.bildirim_gonder(
+            "Gelişim Takip",
+            "Arka planda çalışıyor. Açmak için tepsi ikonuna tıkla.",
+        )
 
     try:
         webview.start()

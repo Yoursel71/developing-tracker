@@ -217,6 +217,35 @@ def test_anahtar_yenilenince_eskisi_gecersiz(kurulu):
     assert yanit.status_code == 403
 
 
+# --- İkinci örnek: pencereyi öne getirme ------------------------------------
+
+def test_pencereyi_ac_anahtarsiz_reddedilir(kurulu):
+    yanit = kurulu.post("/api/pencereyi-ac")
+    assert yanit.status_code == 403
+
+
+def test_pencereyi_ac_gecerli_anahtarla_geri_cagriyi_tetikler(kurulu):
+    import app as app_modulu
+
+    cagrildi = []
+    app_modulu.pencere_ac_geri_cagri = lambda: cagrildi.append(True)
+    try:
+        anahtar = api_anahtari.anahtari_al()
+        yanit = kurulu.post("/api/pencereyi-ac", headers={"X-Api-Anahtari": anahtar})
+        assert yanit.status_code == 200
+        assert yanit.get_json()["tamam"] is True
+        assert cagrildi == [True]
+    finally:
+        app_modulu.pencere_ac_geri_cagri = None
+
+
+def test_pencereyi_ac_masaustu_disinda_hata_vermez(kurulu):
+    """Tarayıcıdan çalıştırıldığında geri çağrı bağlı değildir; sessizce başarılı döner."""
+    anahtar = api_anahtari.anahtari_al()
+    yanit = kurulu.post("/api/pencereyi-ac", headers={"X-Api-Anahtari": anahtar})
+    assert yanit.status_code == 200
+
+
 # --- Dışa aktarma -----------------------------------------------------------
 
 def test_csv_disa_aktarma(kurulu):
