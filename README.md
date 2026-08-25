@@ -48,13 +48,21 @@ duraklar, kapattığında durur.
 ## İndir ve çalıştır (Windows)
 
 1. Depo → **Releases** → **Gelişim Takip — Masaüstü (son derleme)**
-2. `GelisimTakip.exe` dosyasını indir ve çalıştır.
+2. `GelisimTakip.zip` dosyasını indir, bir klasöre çıkar (extract) ve
+   içindeki `GelisimTakip.exe`'yi çalıştır.
 3. İlk açılışta kurulum sihirbazı hedeflerini, GitHub kullanıcı adını ve
    takip edilecek program/siteleri sorar.
 
-> **SmartScreen uyarısı:** `.exe` imzalı olmadığı için Windows "bilinmeyen
+> **SmartScreen uyarısı:** Uygulama imzalı olmadığı için Windows "bilinmeyen
 > yayımcı" uyarısı gösterir. "Daha fazla bilgi" → "Yine de çalıştır" ile
 > açabilirsin.
+>
+> **Neden .zip, tek .exe değil:** PyInstaller'ın tek-dosyalık (`--onefile`)
+> derlemesi kendi kendini geçici bir klasöre açan bir "bootloader"
+> kullanır; bu örüntü gerçek trojan'ların davranışına benzediği için bazı
+> antivirüsler (Windows Defender'ın ML tabanlı `Wacatac.C!ml` kuralı dahil)
+> yanlış pozitif üretir. Klasör hâlinde derleme (`--onedir`) bu adımı
+> ortadan kaldırır.
 
 Uygulama pencereyi kapatınca **sistem tepsisine iner** ve takibe devam
 eder; tamamen çıkmak için tepsi ikonuna sağ tıklayıp "Çıkış" de.

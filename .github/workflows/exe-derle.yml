@@ -47,8 +47,15 @@ jobs:
       - name: .exe derle
         # plyer için PyInstaller hook'u yok; platform modülü dinamik import
         # edildiği için elle bildirilmezse bildirimler .exe'de hiç çalışmaz.
+        #
+        # --onedir kullanılıyor (--onefile değil): tek dosyalık derleme kendi
+        # kendini geçici bir klasöre açan bir "bootloader" kullanır ve bu
+        # örüntü, gerçek trojan'ların davranışına çok benzediği için
+        # antivirüslerde (özellikle Windows Defender'ın Wacatac.C!ml gibi
+        # ML tabanlı sezgisel kurallarında) sık sık yanlış pozitif üretir.
+        # --onedir'de böyle bir açma adımı yok; dosyalar zaten klasörde duruyor.
         run: >-
-          pyinstaller --onefile --windowed --name GelisimTakip
+          pyinstaller --onedir --windowed --name GelisimTakip
           --icon varliklar/ikon.ico
           --add-data "templates;templates"
           --add-data "static;static"
@@ -57,11 +64,14 @@ jobs:
           --noconfirm
           masaustu.py
 
+      - name: Zip'le
+        run: Compress-Archive -Path dist/GelisimTakip/* -DestinationPath dist/GelisimTakip.zip
+
       - name: Artifact yükle
         uses: actions/upload-artifact@v4
         with:
           name: GelisimTakip-exe
-          path: dist/GelisimTakip.exe
+          path: dist/GelisimTakip.zip
           retention-days: 30
 
       - name: Release'i güncelle
@@ -74,14 +84,18 @@ jobs:
           name: "Gelişim Takip — Masaüstü (son derleme)"
           body: >-
             Bu release her başarılı derlemede otomatik güncellenir ve en son
-            koddan üretilen .exe'yi içerir.
+            koddan üretilen uygulamayı içerir.
 
 
-            Windows imzasız .exe'ler için SmartScreen uyarısı gösterir:
+            GelisimTakip.zip dosyasını indir, klasöre çıkar (extract) ve
+            içindeki GelisimTakip.exe'yi çalıştır.
+
+
+            Windows imzasız uygulamalar için SmartScreen uyarısı gösterir:
             "Daha fazla bilgi" → "Yine de çalıştır" ile açabilirsin.
 
 
             Commit: ${{ github.sha }}
-          files: dist/GelisimTakip.exe
+          files: dist/GelisimTakip.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
