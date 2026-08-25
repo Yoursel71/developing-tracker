@@ -68,7 +68,7 @@ jobs:
         # Yalnızca varsayılan branch: aksi hâlde her deneme branch'i,
         # kullanıcıların indirdiği "son sürüm"ü anında ezerdi.
         if: github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           tag_name: masaustu-son-surum
           name: "Gelişim Takip — Masaüstü (son derleme)"
