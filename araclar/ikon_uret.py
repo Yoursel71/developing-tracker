@@ -31,14 +31,35 @@ def _yuksek_cozunurluklu_gorsel():
         [olcekle(2), olcekle(2), olcekle(62), olcekle(62)],
         radius=olcekle(14), fill=RENK_ZEMIN, outline=RENK_VURGU, width=olcekle(2.5),
     )
-    cizim.line(
-        [(olcekle(14), olcekle(42)), (olcekle(26), olcekle(30)),
-         (olcekle(34), olcekle(36)), (olcekle(50), olcekle(18))],
-        fill=RENK_VURGU, width=olcekle(5.5), joint="curve",
+    # Kronometre kurma düğmesi (crown) ve gövdeye bağlayan sap.
+    cizim.rounded_rectangle(
+        [olcekle(28), olcekle(6), olcekle(36), olcekle(12)],
+        radius=olcekle(2), fill=RENK_VURGU,
     )
-    r = olcekle(5.5)
+    cizim.line(
+        [(olcekle(32), olcekle(12)), (olcekle(32), olcekle(16))],
+        fill=RENK_VURGU, width=olcekle(3),
+    )
+    # Kronometre gövdesi.
+    r_govde = olcekle(17)
     cizim.ellipse(
-        [olcekle(50) - r, olcekle(18) - r, olcekle(50) + r, olcekle(18) + r],
+        [olcekle(32) - r_govde, olcekle(38) - r_govde,
+         olcekle(32) + r_govde, olcekle(38) + r_govde],
+        outline=RENK_VURGU, width=olcekle(3.5),
+    )
+    # Akrep (12 yönü) ve yelkovan (~2 yönü).
+    cizim.line(
+        [(olcekle(32), olcekle(38)), (olcekle(32), olcekle(26))],
+        fill=RENK_VURGU, width=olcekle(3),
+    )
+    cizim.line(
+        [(olcekle(32), olcekle(38)), (olcekle(40), olcekle(33))],
+        fill=RENK_VURGU, width=olcekle(3),
+    )
+    r_merkez = olcekle(2.2)
+    cizim.ellipse(
+        [olcekle(32) - r_merkez, olcekle(38) - r_merkez,
+         olcekle(32) + r_merkez, olcekle(38) + r_merkez],
         fill=RENK_VURGU,
     )
     return gorsel
