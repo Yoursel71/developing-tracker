@@ -49,8 +49,10 @@ jobs:
         # edildiği için elle bildirilmezse bildirimler .exe'de hiç çalışmaz.
         run: >-
           pyinstaller --onefile --windowed --name GelisimTakip
+          --icon varliklar/ikon.ico
           --add-data "templates;templates"
           --add-data "static;static"
+          --add-data "varliklar;varliklar"
           --hidden-import plyer.platforms.win.notification
           --noconfirm
           masaustu.py

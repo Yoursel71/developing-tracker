@@ -10,12 +10,29 @@ Dikkat: ``run_detached`` daemon olmayan bir thread açar — çıkışta
 
 import logging
 
+from platform_katmani import yollar
+
 logger = logging.getLogger(__name__)
 
 _ikon = None
+_paket_gorseli = None
 
 
-def _gorsel(aktif=True):
+def _paketlenmis_ikonu_yukle():
+    """varliklar/ikon.png'yi bir kez okur; yoksa None döner (çizime düşülür)."""
+    global _paket_gorseli
+    if _paket_gorseli is not None:
+        return _paket_gorseli
+    from PIL import Image
+
+    try:
+        _paket_gorseli = Image.open(yollar.kaynak_yolu("varliklar", "ikon.png")).convert("RGBA")
+    except (FileNotFoundError, OSError):
+        _paket_gorseli = False
+    return _paket_gorseli
+
+
+def _cizilmis_gorsel(aktif):
     from PIL import Image, ImageDraw
 
     renk = "#3fb950" if aktif else "#6e7d8d"
@@ -25,6 +42,19 @@ def _gorsel(aktif=True):
     # Yükselen grafik çizgisi
     cizim.line([(18, 42), (28, 32), (36, 38), (48, 22)], fill=renk, width=5, joint="curve")
     return gorsel
+
+
+def _gri_tonlama(gorsel):
+    from PIL import ImageEnhance
+
+    return ImageEnhance.Color(gorsel).enhance(0.15)
+
+
+def _gorsel(aktif=True):
+    paket = _paketlenmis_ikonu_yukle()
+    if paket is False:
+        return _cizilmis_gorsel(aktif)
+    return paket if aktif else _gri_tonlama(paket)
 
 
 def baslat(ac_geri_cagri, duraklat_geri_cagri, cikis_geri_cagri, duraklatildi_mi):
