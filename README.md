@@ -5,7 +5,12 @@ Windows masaüstü uygulaması. Kod yazdığın programı ya da kurs siteni
 açtığında zamanlayıcı kendiliğinden başlar, klavyeden elini çektiğinde
 duraklar, kapattığında durur.
 
-![Panel](https://img.shields.io/badge/arayüz-koyu%20tema-1f6feb) ![Test](https://img.shields.io/badge/test-212%20passing-3fb950)
+[![Testler](https://github.com/yoursel71/developing-tracker/actions/workflows/exe-derle.yml/badge.svg)](https://github.com/yoursel71/developing-tracker/actions/workflows/exe-derle.yml)
+[![Son sürüm](https://img.shields.io/github/v/release/yoursel71/developing-tracker?label=son%20s%C3%BCr%C3%BCm&color=3fb950)](https://github.com/yoursel71/developing-tracker/releases/tag/masaustu-son-surum)
+[![Lisans](https://img.shields.io/badge/lisans-MIT-1f6feb)](LICENSE)
+![Python](https://img.shields.io/badge/python-3.11-1f6feb)
+
+![Panel](varliklar/ekran/panel.png)
 
 ## Ne yapar
 
@@ -40,7 +45,7 @@ duraklar, kapattığında durur.
 - **Klavye kısayolları** — `Boşluk` başlat/durdur, `P/I/S/Y/G/H/A` sayfalar,
   `?` yardım.
 
-## Kurulum (Windows)
+## İndir ve çalıştır (Windows)
 
 1. Depo → **Releases** → **Gelişim Takip — Masaüstü (son derleme)**
 2. `GelisimTakip.exe` dosyasını indir ve çalıştır.
@@ -53,7 +58,20 @@ duraklar, kapattığında durur.
 
 Uygulama pencereyi kapatınca **sistem tepsisine iner** ve takibe devam
 eder; tamamen çıkmak için tepsi ikonuna sağ tıklayıp "Çıkış" de.
-Ayarlar'dan "Windows açılışında otomatik başlat" seçeneğini açabilirsin.
+Ayarlar'dan "Windows açılışında otomatik başlat" seçeneğini açarsan
+uygulama PC açılışında **pencere göstermeden** yalnızca tepside başlar;
+açmak için tepsi ikonuna ya da `GelisimTakip.exe`'ye tekrar tıklaman
+yeterli — ikinci tıklama yeni bir kopya açmaz, çalışan pencereyi öne getirir.
+
+## Ekran görüntüleri
+
+| Isı haritası | İstatistikler |
+|---|---|
+| ![Isı haritası](varliklar/ekran/isi-haritasi.png) | ![İstatistikler](varliklar/ekran/istatistikler.png) |
+
+| Yıl özeti |
+|---|
+| ![Yıl özeti](varliklar/ekran/yil-ozeti.png) |
 
 ## Tarayıcı eklentisi (kurs siteleri için)
 
@@ -76,6 +94,11 @@ Bu klasörde `veri.json`, `yedekler/` ve `uygulama.log` bulunur. Veri
 alınır (son 10 tutulur) ve dosya bozulursa otomatik olarak en yeni sağlam
 yedeğe dönülür. Ayarlar'dan CSV/JSON dışa aktarabilir, yedekten geri
 yükleyebilirsin.
+
+**Gizlilik:** veri yalnızca bu klasörde kalır, hiçbir sunucuya
+gönderilmez. GitHub senkronu yalnızca herkese açık Events API'sini okur;
+yıl özeti rozetleri bilgisayarında üretilir ve indirmedikçe hiçbir yere
+çıkmaz.
 
 `GELISIM_TAKIP_VERI_DIZINI` ortam değişkeniyle konumu değiştirebilirsin.
 `.exe`'nin yanına `tasinabilir.txt` koyarsan veri exe'nin yanına yazılır
@@ -128,7 +151,8 @@ süre iki kez sayılırdı.
   artırabilirsin.
 - Uygulama sabit `57391` portunu kullanır (`GELISIM_TAKIP_PORT` ile
   değiştirilebilir). İkinci bir örnek açılmaz; veri bozulmasını önlemek için
-  tek örnek kilidi vardır.
+  tek örnek kilidi vardır — `.exe`'ye tekrar tıklamak yeni bir kopya açmaz,
+  çalışan pencereyi öne getirir.
 
 ## Proje yapısı
 
@@ -140,6 +164,18 @@ depo/                   JSON deposu, şema göçü, varsayılanlar
 servisler/              zaman takibi, izleme motoru, istatistik, doğrulama
 platform_katmani/       Windows'a özgü kod (boşta, tepsi, autostart, yollar)
 templates/ static/      arayüz
+varliklar/              ikon kaynağı ve README ekran görüntüleri
+araclar/                ikon üretimi ve ekran görüntüsü alma script'leri
 tarayici-eklentisi/     Chrome/Edge eklentisi (Manifest V3)
 testler/                pytest paketi
 ```
+
+## Katkı
+
+Hata bildirimi ve özellik isteği için [Issues](../../issues) sayfasını,
+kod katkısı için [CONTRIBUTING.md](CONTRIBUTING.md) dosyasını kullan.
+Sürüm geçmişi için [CHANGELOG.md](CHANGELOG.md).
+
+## Lisans
+
+[MIT](LICENSE)
