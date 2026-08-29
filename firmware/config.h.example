@@ -1,0 +1,23 @@
+// Bu dosyayı "config.h" olarak kopyala ve kendi bilgilerinle doldur.
+// config.h asla commit edilmez (bkz. repo kökündeki .gitignore).
+#pragma once
+
+#define WIFI_SSID      "AGINIZIN_ADI"
+#define WIFI_PASSWORD  "AGINIZIN_SIFRESI"
+
+// Gelişim Takip'in çalıştığı bilgisayarın yerel ağdaki adresi + portu.
+// Örnek: "http://192.168.1.42:57391" (varsayılan port 57391).
+#define API_BASE_URL   "http://192.168.1.100:57391"
+
+// Uygulamanın Ayarlar sayfasından kopyalanan API anahtarı
+// (tarayıcı eklentisiyle aynı anahtar; anahtarsız istek 403 döner).
+#define API_ANAHTARI   "BURAYA_API_ANAHTARINI_YAPISTIR"
+
+// Veri tazeleme aralığı (ms). Ekran hangi sayfada olursa olsun bu döngü
+// bağımsız çalışır.
+#define VERI_TAZELEME_ARALIGI_MS  30000UL
+
+// NTP sunucusu ve saat dilimi ofseti. Türkiye: UTC+3, yaz saati uygulaması yok.
+#define NTP_SUNUCU          "pool.ntp.org"
+#define GMT_OFSET_SN        (3 * 3600)
+#define YAZ_SAATI_OFSET_SN  0

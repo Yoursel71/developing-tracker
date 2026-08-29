@@ -14,3 +14,7 @@ data/veri.json.bozuk-*
 data/api-anahtari.txt
 data/uygulama.log*
 data/yedekler/
+
+# ESP32 firmware sırları (WiFi şifresi, API anahtarı) — şablonu kullan:
+# firmware/config.h.example
+firmware/config.h

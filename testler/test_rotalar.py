@@ -246,6 +246,39 @@ def test_pencereyi_ac_masaustu_disinda_hata_vermez(kurulu):
     assert yanit.status_code == 200
 
 
+# --- Harici cihaz API'si (ESP32 vb.) ----------------------------------------
+
+def test_cihaz_durumu_anahtarsiz_reddedilir(kurulu):
+    yanit = kurulu.get("/api/device/status")
+    assert yanit.status_code == 403
+
+
+def test_cihaz_durumu_gecerli_anahtarla_sema_doner(kurulu):
+    kurulu.post("/oturum/ekle", data={
+        "tarih": "2026-03-10", "kategori": "Python", "sure_dakika": "45",
+    }, headers={"X-Istek-Turu": "json"})
+
+    anahtar = api_anahtari.anahtari_al()
+    yanit = kurulu.get("/api/device/status", headers={"X-Api-Anahtari": anahtar})
+    assert yanit.status_code == 200
+
+    govde = yanit.get_json()
+    for alan in (
+        "today_hours", "weekly_goal_hours", "weekly_logged_hours",
+        "weekly_remaining_hours", "streak_days", "pace_status",
+        "heatmap", "last_updated",
+    ):
+        assert alan in govde
+    assert govde["pace_status"] in ("on_track", "behind", "critical")
+    assert len(govde["heatmap"]) == 70
+
+
+def test_cihaz_durumu_sorgu_parametresiyle_de_calisir(kurulu):
+    anahtar = api_anahtari.anahtari_al()
+    yanit = kurulu.get(f"/api/device/status?anahtar={anahtar}")
+    assert yanit.status_code == 200
+
+
 # --- Dışa aktarma -----------------------------------------------------------
 
 def test_csv_disa_aktarma(kurulu):

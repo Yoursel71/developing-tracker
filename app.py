@@ -13,6 +13,7 @@ from depo import json_deposu
 from platform_katmani import bosta, yollar
 from servisler import (
     api_anahtari,
+    cihaz_durumu,
     dogrulama,
     kategoriler as kategori_servisi,
     github_entegrasyon,
@@ -716,6 +717,22 @@ def api_site_durumu():
         return _eklenti_yaniti({"tamam": False, "hata": "Bilinmeyen kategori"}, 400)
     otomatik_izleme.site_durumu_bildir(kategori, durum)
     return _eklenti_yaniti({"tamam": True})
+
+
+# --- Harici cihaz API'si (ESP32 vb.) ----------------------------------------
+
+@app.route("/api/device/status")
+def api_cihaz_durumu():
+    """ESP32 gibi harici, ekranlı bir cihaz için özet durum.
+
+    Şema için docs/esp32-display-entegrasyon-plani.md. Eklentiyle aynı
+    yerel API anahtarını ister; anahtar olmadan hiçbir cihaz veriye erişemez.
+    """
+    sunulan = request.headers.get("X-Api-Anahtari") or request.args.get("anahtar")
+    if not api_anahtari.dogrula(sunulan):
+        return jsonify({"tamam": False, "hata": "Geçersiz API anahtarı"}), 403
+    veri = json_deposu.oku()
+    return jsonify(cihaz_durumu.durum_hesapla(veri))
 
 
 def uygulamayi_hazirla():
